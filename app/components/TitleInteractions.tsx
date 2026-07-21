@@ -10,7 +10,7 @@ export function TitleActions({ contentId, isAnime }: { contentId: string; isAnim
   const [message, setMessage] = useState("");
   const watch = async () => { await fetch("/api/app/history", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ contentId, progress: 1 }) }); setMessage(isAnime ? "Үзсэн түүхэнд нэмэгдлээ" : "Уншсан түүхэнд нэмэгдлээ"); };
   const save = async () => { await fetch("/api/app/library", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ contentId }) }); setSaved(true); setMessage("Миний санд хадгаллаа"); };
-  return <><div className="title-actions"><button onClick={watch}>▶ &nbsp; {isAnime ? "Одоо үзэх" : "Одоо унших"}</button><button className={saved ? "saved" : ""} onClick={save} aria-label="Миний санд нэмэх">{saved ? "✓" : "＋"}</button><button aria-label="Хуваалцах">⌘</button><span>MGL</span></div>{message && <small className="action-message">{message}</small>}</>;
+  return <><div className="title-actions"><button onClick={watch}>▶ &nbsp; {isAnime ? "Одоо үзэх" : "Одоо унших"}</button>{!isAnime&&<button className={saved ? "saved" : ""} onClick={save} aria-label="Миний санд нэмэх">{saved ? "✓" : "＋"}</button>}<button aria-label="Хуваалцах">⌘</button><span>MGL</span></div>{message && <small className="action-message">{message}</small>}</>;
 }
 
 export function Comments({ contentId }: { contentId: string }) {
