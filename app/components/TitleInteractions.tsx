@@ -5,12 +5,12 @@ import type { FormEvent } from "react";
 
 type Comment = { id: number; displayName: string; body: string; createdAt: string };
 
-export function TitleActions({ contentId, isAnime }: { contentId: string; isAnime: boolean }) {
+export function TitleActions({ contentId, primaryHref }: { contentId: string; primaryHref: string }) {
   const [saved, setSaved] = useState(false);
   const [message, setMessage] = useState("");
-  const watch = async () => { await fetch("/api/app/history", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ contentId, progress: 1 }) }); setMessage(isAnime ? "Үзсэн түүхэнд нэмэгдлээ" : "Уншсан түүхэнд нэмэгдлээ"); };
-  const save = async () => { await fetch("/api/app/library", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ contentId }) }); setSaved(true); setMessage("Миний санд хадгаллаа"); };
-  return <><div className="title-actions"><button onClick={watch}>▶ &nbsp; {isAnime ? "Одоо үзэх" : "Одоо унших"}</button>{!isAnime&&<button className={saved ? "saved" : ""} onClick={save} aria-label="Миний санд нэмэх">{saved ? "✓" : "＋"}</button>}<button aria-label="Хуваалцах">⌘</button><span>MGL</span></div>{message && <small className="action-message">{message}</small>}</>;
+  const read = async () => { await fetch("/api/app/history", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ contentId, progress: 1 }) }); window.location.href=primaryHref; };
+  const save = async () => { const response=await fetch("/api/app/library", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ contentId }) }); if(!response.ok){setMessage("Санд нэмэхэд алдаа гарлаа");return}setSaved(true);setMessage("Миний санд хадгаллаа"); };
+  return <><div className="title-actions clean-title-actions"><button onClick={read}>▶ Унших</button><button className={saved ? "saved" : ""} onClick={save}>{saved ? "✓ Санд нэмсэн" : "＋ Санд нэмэх"}</button></div>{message && <small className="action-message">{message}</small>}</>;
 }
 
 export function Comments({ contentId }: { contentId: string }) {
