@@ -1,6 +1,7 @@
 import { Chrome } from "../../components/Chrome";
 import { catalog } from "../../data/catalog";
 import type { CSSProperties } from "react";
+import { Comments, TitleActions } from "../../components/TitleInteractions";
 
 export function generateStaticParams() {
   return catalog.map((item) => ({ id: item.id }));
@@ -19,7 +20,7 @@ export default async function TitlePage({ params }: { params: Promise<{ id: stri
   return <Chrome><main className="detail-page">
     <section className="title-hero" style={{ "--hero-image": `url(${item.image})` } as CSSProperties}>
       <div className="title-backdrop" /><div className="title-gradient" />
-      <div className="title-intro"><img src={item.image} alt={`${item.title} cover`} /><div><small>{item.originalTitle}</small><h1>{item.title}</h1><div className="title-stats"><b>{Math.round(item.rating * 10)}%</b><b>{item.year}</b><b>{item.status}</b></div><p>{description}</p><div className="title-actions"><button>▶ &nbsp; {isAnime ? "Одоо үзэх" : "Одоо унших"}</button><button aria-label="Миний санд нэмэх">＋</button><button aria-label="Хуваалцах">⌘</button><span>MGL</span></div></div></div>
+      <div className="title-intro"><img src={item.image} alt={`${item.title} cover`} /><div><small>{item.originalTitle}</small><h1>{item.title}</h1><div className="title-stats"><b>{Math.round(item.rating * 10)}%</b><b>{item.year}</b><b>{item.status}</b></div><p>{description}</p><TitleActions contentId={item.id} isAnime={isAnime} /></div></div>
     </section>
 
     {isAnime && <section className="relations"><div className="detail-heading"><h2>Холбоотой бүтээл</h2><button>Бүгдийг үзэх</button></div><div className="relation-grid">{similar.slice(0,3).map((entry) => <a href={`/title/${entry.id}`} key={entry.id}><img src={entry.image} alt="" /><div><small>SIDE_STORY</small><b>{entry.title}</b><span>SPECIAL</span></div></a>)}</div></section>}
@@ -35,6 +36,7 @@ export default async function TitlePage({ params }: { params: Promise<{ id: stri
 
     {!isAnime && <section className="characters"><div className="detail-heading"><h2>Дүрүүд</h2><button>Бүгдийг үзэх</button></div><div className="character-grid">{["Гол дүр","Туслах дүр","Багш","Өрсөлдөгч","Холбоотон","Нууцлаг дүр"].map((role,i) => <div key={role}><img src={similar[i % similar.length]?.image ?? item.image} alt="" /><span><b>{role}</b><small>{i === 0 ? "Main" : "Supporting"}</small></span></div>)}</div></section>}
 
+    <Comments contentId={item.id} />
     <section className="more-like"><div className="detail-heading"><h2>Төстэй бүтээлүүд</h2></div><div className="mini-row">{similar.map((entry) => <a href={`/title/${entry.id}`} key={entry.id}><img src={entry.image} alt="" /><b>{entry.title}</b><span>{entry.status}</span></a>)}</div></section>
   </main></Chrome>;
 }

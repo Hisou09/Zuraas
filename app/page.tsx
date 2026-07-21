@@ -33,5 +33,5 @@ export default function Home() {
   const anime = result.filter((item) => item.type === "anime");
   const manga = result.filter((item) => item.type !== "anime");
 
-  return <Chrome searchValue={query} onSearchChange={setQuery}><main className="home-content" id="catalog"><Shelf title="Popular Anime" items={anime} /><Shelf title="Trending Manga" items={manga} />{result.length === 0 && <div className="empty"><strong>Илэрц олдсонгүй</strong><span>Өөр түлхүүр үгээр хайгаад үзээрэй.</span></div>}</main></Chrome>;
+  return <Chrome searchValue={query} onSearchChange={setQuery}><main className="home-content" id="catalog"><Shelf title="Анимэ" items={anime} /><Shelf title="Манга" items={manga} />{result.length === 0 && <div className="empty"><strong>Илэрц олдсонгүй</strong><span>Өөр түлхүүр үгээр хайгаад үзээрэй.</span></div>}</main></Chrome>;
 }
