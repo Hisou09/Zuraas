@@ -10,6 +10,8 @@ export type CatalogItem = {
   rating: number;
   genres: string[];
   image: string;
+  createdAt?: string;
+  latestAt?: string;
 };
 
 export const catalog: CatalogItem[] = [
