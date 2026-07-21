@@ -15,6 +15,13 @@
       "when": 1784637616745,
       "tag": "0001_goofy_sally_floyd",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784641371151,
+      "tag": "0002_outgoing_roland_deschain",
+      "breakpoints": true
     }
   ]
 }

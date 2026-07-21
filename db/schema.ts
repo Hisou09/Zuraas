@@ -8,7 +8,30 @@ export const users = sqliteTable("users", {
   role: text("role").notNull().default("member"),
   usercode: text("usercode").notNull().unique(),
   vipUntil: text("vip_until"),
+  contactEmail: text("contact_email"),
+  avatarKey: text("avatar_key"),
+  coverKey: text("cover_key"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const userDevices = sqliteTable("user_devices", {
+  deviceId: text("device_id").primaryKey(),
+  userEmail: text("user_email").notNull(),
+  label: text("label").notNull(),
+  userAgent: text("user_agent").notNull().default(""),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  lastSeenAt: text("last_seen_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  revokedAt: text("revoked_at"),
+});
+
+export const vipHistory = sqliteTable("vip_history", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userEmail: text("user_email").notNull(),
+  days: integer("days").notNull(),
+  source: text("source").notNull().default("admin"),
+  grantedBy: text("granted_by"),
+  grantedAt: text("granted_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  expiresAt: text("expires_at"),
 });
 
 export const contents = sqliteTable("contents", {
