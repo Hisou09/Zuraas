@@ -51,9 +51,10 @@ api.get("/social", async (c) => { const value = await database().prepare("SELECT
 api.get("/admin", async (c) => {
   await ensureUser(c.req.raw);
   const mangaIds = catalog.filter((item) => item.type !== "anime").map((item) => `'${item.id.replaceAll("'", "''")}'`).join(",") || "''";
-  const [users, comments, views, revenue, bookmarks, vip, contents, social] = await database().batch([
+  const [users, comments, reports, views, revenue, bookmarks, vip, contents, social] = await database().batch([
     database().prepare("SELECT id, email, display_name AS displayName, role, usercode, vip_until AS vipUntil, created_at AS createdAt FROM users ORDER BY id DESC LIMIT 200"),
     database().prepare("SELECT id, content_id AS contentId, display_name AS displayName, body, created_at AS createdAt FROM comments ORDER BY id DESC LIMIT 200"),
+    database().prepare("SELECT r.id, r.content_id AS contentId, c.title AS contentTitle, r.chapter_number AS chapterNumber, r.user_email AS userEmail, r.issue_type AS issueType, r.details, r.status, r.created_at AS createdAt FROM error_reports r LEFT JOIN contents c ON c.id=r.content_id ORDER BY CASE WHEN r.status='open' THEN 0 ELSE 1 END, r.id DESC LIMIT 300"),
     database().prepare("SELECT COUNT(*) AS count FROM analytics_events WHERE event_type = 'view'"),
     database().prepare("SELECT COALESCE(SUM(amount), 0) AS total FROM analytics_events WHERE event_type = 'payment'"),
     database().prepare(`SELECT COUNT(*) AS count FROM library_items WHERE content_id IN (${mangaIds}) OR content_id IN (SELECT id FROM contents WHERE type != 'anime')`),
@@ -80,7 +81,14 @@ api.get("/admin", async (c) => {
     }
   }
   const genres = [...genreCounts.entries()].map(([name, contentCount]) => ({ name, contentCount })).sort((a, b) => a.name.localeCompare(b.name));
-  return c.json({ users: users.results, comments: comments.results, packages: packages.results, vip: vip.results[0], contents: contents.results, genres, social: social.results[0], periods: periodResults, analytics: { visits: Number((views.results[0] as { count?: number })?.count || 0), users: users.results.length, revenue: Number((revenue.results[0] as { total?: number })?.total || 0), bookmarks: Number((bookmarks.results[0] as { count?: number })?.count || 0) } });
+  return c.json({ users: users.results, comments: comments.results, reports: reports.results, packages: packages.results, vip: vip.results[0], contents: contents.results, genres, social: social.results[0], periods: periodResults, analytics: { visits: Number((views.results[0] as { count?: number })?.count || 0), users: users.results.length, revenue: Number((revenue.results[0] as { total?: number })?.total || 0), bookmarks: Number((bookmarks.results[0] as { count?: number })?.count || 0) } });
+});
+
+api.put("/admin/report/:id", async (c) => {
+  const { status } = await c.req.json<{ status: "open" | "resolved" }>();
+  if (!['open', 'resolved'].includes(status)) return c.json({ error: "Төлөв буруу байна" }, 400);
+  const result = await database().prepare("UPDATE error_reports SET status=? WHERE id=?").bind(status, Number(c.req.param("id"))).run();
+  return c.json({ ok: true, changed: result.meta.changes });
 });
 
 api.delete("/admin/genre", async (c) => {
