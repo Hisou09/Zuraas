@@ -13,4 +13,4 @@
 
 /* clean content cards: title below, count on the cover */
 .catalog-count{position:absolute;z-index:3;right:8px;top:8px;padding:6px 7px;border:1px solid rgba(255,255,255,.14);border-radius:7px;background:rgba(7,12,19,.88);box-shadow:0 5px 16px rgba(0,0,0,.3);backdrop-filter:blur(7px);color:#edf5fb;font-size:8px;font-weight:800;line-height:1}.catalog-card>div:last-child{padding-top:9px}.catalog-card h2{height:auto;min-height:18px;padding-right:0;line-height:1.45}.catalog-card>div:last-child>i,.catalog-card p,.catalog-poster>b,.catalog-poster>span{display:none!important}
-@media(max-width:720px){.catalog-count{right:7px;top:7px;padding:5px 6px;font-size:7px}.catalog-search-row{padding-right:49px}.catalog-card>div:last-child{padding-top:8px}.catalog-card>div:last-child h2{font-size:11px;line-height:1.45}}
+@media(max-width:720px){.catalog-page{padding-top:66px}.catalog-count{right:7px;top:7px;padding:5px 6px;font-size:7px}.catalog-search-row{padding-right:0}.catalog-card>div:last-child{padding-top:8px}.catalog-card>div:last-child h2{font-size:11px;line-height:1.45}}
