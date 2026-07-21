@@ -1,13 +1,15 @@
 import { Hono } from "hono";
-import { database, ensureSchema, ensureUser, mediaBucket } from "../../../../db/runtime";
+import { database, ensureSchema, ensureUser, isAdmin, mediaBucket } from "../../../../db/runtime";
 import { catalog } from "../../../data/catalog";
 
 const api = new Hono().basePath("/api/app");
 api.use("*", async (_c, next) => { await ensureSchema(); await next(); });
+api.use("/admin",async(c,next)=>{if(!await isAdmin(c.req.raw))return c.json({error:"Админ эрх шаардлагатай"},403);await next()});
+api.use("/admin/*",async(c,next)=>{if(!await isAdmin(c.req.raw))return c.json({error:"Админ эрх шаардлагатай"},403);await next()});
 
 api.get("/session", async (c) => {
   const user = await ensureUser(c.req.raw);
-  const profile = await database().prepare("SELECT usercode, vip_until AS vipUntil FROM users WHERE email = ?").bind(user.email).first();
+  const profile = await database().prepare("SELECT usercode, vip_until AS vipUntil, role FROM users WHERE email = ?").bind(user.email).first();
   const notifications = await database().prepare("SELECT id, title, body, is_read AS isRead, created_at AS createdAt FROM notifications WHERE user_email = ? ORDER BY id DESC LIMIT 8").bind(user.email).all();
   return c.json({ user: { ...user, ...profile }, notifications: notifications.results });
 });
@@ -92,9 +94,12 @@ api.get("/media/:key", async (c) => { const object = await mediaBucket().get(c.r
 
 api.post("/admin/vip", async (c) => { await ensureUser(c.req.raw); const v = await c.req.json<{ bankName: string; accountNumber: string; accountHolder: string; promotion: string; globalDiscount: number; accentColor?: string }>(); await database().prepare("UPDATE vip_settings SET bank_name=?,account_number=?,account_holder=?,promotion=?,global_discount=?,accent_color=? WHERE id=1").bind(v.bankName, v.accountNumber, v.accountHolder, v.promotion, Number(v.globalDiscount) || 0, v.accentColor || "#8b6cf6").run(); return c.json({ ok: true }); });
 api.post("/admin/package", async (c) => { await ensureUser(c.req.raw); const p = await c.req.json<{ name: string; durationDays: number; price: number }>(); await database().prepare("INSERT INTO vip_packages (name,duration_days,price,discount_percent,active) VALUES (?,?,?,0,1)").bind(p.name, Number(p.durationDays), Number(p.price)).run(); return c.json({ ok: true }); });
+api.put("/admin/package/:id",async(c)=>{const p=await c.req.json<{name:string;durationDays:number;price:number}>();await database().prepare("UPDATE vip_packages SET name=?,duration_days=?,price=? WHERE id=?").bind(p.name,Number(p.durationDays),Number(p.price),Number(c.req.param("id"))).run();return c.json({ok:true})});
+api.delete("/admin/package/:id",async(c)=>{await database().prepare("DELETE FROM vip_packages WHERE id=?").bind(Number(c.req.param("id"))).run();return c.json({ok:true})});
 api.post("/admin/grant-vip", async (c) => { await ensureUser(c.req.raw); const { email, days } = await c.req.json<{ email: string; days: number }>(); await database().prepare("UPDATE users SET vip_until=datetime(CASE WHEN vip_until > CURRENT_TIMESTAMP THEN vip_until ELSE CURRENT_TIMESTAMP END, ?) WHERE email=?").bind(`+${Number(days)} day`, email).run(); return c.json({ ok: true }); });
 api.post("/admin/social", async (c) => { await ensureUser(c.req.raw); const s = await c.req.json<Record<string,string>>(); await database().prepare("UPDATE social_settings SET facebook=?,instagram=?,youtube=?,discord=?,telegram=? WHERE id=1").bind(s.facebook||"",s.instagram||"",s.youtube||"",s.discord||"",s.telegram||"").run(); return c.json({ ok: true }); });
 
 export const GET = (request: Request) => api.fetch(request);
 export const POST = (request: Request) => api.fetch(request);
+export const PUT = (request: Request) => api.fetch(request);
 export const DELETE = (request: Request) => api.fetch(request);

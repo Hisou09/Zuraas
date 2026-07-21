@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+export const OWNER_EMAIL="kanbara120@yahoo.com";
 
 export function database(): D1Database { if (!env.DB) throw new Error("D1 database is unavailable"); return env.DB; }
 export function mediaBucket(): R2Bucket { if (!env.MEDIA) throw new Error("R2 media storage is unavailable"); return env.MEDIA; }
@@ -37,4 +38,5 @@ export function ensureSchema(){
 }
 
 export function identity(request:Request){const email=request.headers.get("oai-authenticated-user-email")??"demo@zuraas.local";const encoded=request.headers.get("oai-authenticated-user-full-name");const encoding=request.headers.get("oai-authenticated-user-full-name-encoding");let fullName="Зураас хэрэглэгч";if(encoded&&encoding==="percent-encoded-utf-8")try{fullName=decodeURIComponent(encoded)}catch{/* fallback */}return{email,displayName:fullName};}
-export async function ensureUser(request:Request){await ensureSchema();const user=identity(request);await database().prepare("INSERT INTO users (email,display_name,role,usercode) VALUES (?,?,'member',?) ON CONFLICT(email) DO UPDATE SET display_name=excluded.display_name").bind(user.email,user.displayName,randomUsercode()).run();return user;}
+export async function ensureUser(request:Request){await ensureSchema();const user=identity(request);const role=user.email.toLowerCase()===OWNER_EMAIL?"admin":"member";await database().prepare("INSERT INTO users (email,display_name,role,usercode) VALUES (?,?,?,?) ON CONFLICT(email) DO UPDATE SET display_name=excluded.display_name,role=CASE WHEN excluded.email=? THEN 'admin' ELSE users.role END").bind(user.email,user.displayName,role,randomUsercode(),OWNER_EMAIL).run();return user;}
+export async function isAdmin(request:Request){const user=await ensureUser(request);if(user.email.toLowerCase()===OWNER_EMAIL)return true;const row=await database().prepare("SELECT role FROM users WHERE email=?").bind(user.email).first<{role:string}>();return row?.role==="admin";}
