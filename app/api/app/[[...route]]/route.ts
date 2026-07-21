@@ -57,7 +57,7 @@ api.get("/admin", async (c) => {
     database().prepare("SELECT COALESCE(SUM(amount), 0) AS total FROM analytics_events WHERE event_type = 'payment'"),
     database().prepare(`SELECT COUNT(*) AS count FROM library_items WHERE content_id IN (${mangaIds}) OR content_id IN (SELECT id FROM contents WHERE type != 'anime')`),
     database().prepare("SELECT bank_name AS bankName, account_number AS accountNumber, account_holder AS accountHolder, promotion, global_discount AS globalDiscount, accent_color AS accentColor FROM vip_settings WHERE id = 1"),
-    database().prepare("SELECT id, title, type, status, image, description, adult, episode_count AS episodeCount, created_at AS createdAt FROM contents ORDER BY created_at DESC"),
+    database().prepare("SELECT id, title, type, status, genres, image, description, adult, episode_count AS episodeCount, created_at AS createdAt FROM contents ORDER BY created_at DESC"),
     database().prepare("SELECT facebook, instagram, youtube, discord, telegram FROM social_settings WHERE id = 1"),
   ]);
   const packages = await database().prepare("SELECT id, name, duration_days AS durationDays, price, active FROM vip_packages ORDER BY id").all();
@@ -71,7 +71,28 @@ api.get("/admin", async (c) => {
     ]);
     periodResults[String(days)] = { views: Number((pv.results[0] as { n?: number })?.n || 0), users: Number((pu.results[0] as { n?: number })?.n || 0), revenue: Number((pr.results[0] as { n?: number })?.n || 0), bookmarks: Number((pb.results[0] as { n?: number })?.n || 0) };
   }
-  return c.json({ users: users.results, comments: comments.results, packages: packages.results, vip: vip.results[0], contents: contents.results, social: social.results[0], periods: periodResults, analytics: { visits: Number((views.results[0] as { count?: number })?.count || 0), users: users.results.length, revenue: Number((revenue.results[0] as { total?: number })?.total || 0), bookmarks: Number((bookmarks.results[0] as { count?: number })?.count || 0) } });
+  const genreCounts = new Map<string, number>();
+  for (const row of contents.results as { genres?: string }[]) {
+    for (const genre of String(row.genres || "").split(",").map((value) => value.trim()).filter(Boolean)) {
+      const current = [...genreCounts.keys()].find((value) => value.toLocaleLowerCase() === genre.toLocaleLowerCase()) || genre;
+      genreCounts.set(current, (genreCounts.get(current) || 0) + 1);
+    }
+  }
+  const genres = [...genreCounts.entries()].map(([name, contentCount]) => ({ name, contentCount })).sort((a, b) => a.name.localeCompare(b.name));
+  return c.json({ users: users.results, comments: comments.results, packages: packages.results, vip: vip.results[0], contents: contents.results, genres, social: social.results[0], periods: periodResults, analytics: { visits: Number((views.results[0] as { count?: number })?.count || 0), users: users.results.length, revenue: Number((revenue.results[0] as { total?: number })?.total || 0), bookmarks: Number((bookmarks.results[0] as { count?: number })?.count || 0) } });
+});
+
+api.delete("/admin/genre", async (c) => {
+  await ensureUser(c.req.raw);
+  const name = String(c.req.query("name") || "").trim();
+  if (!name) return c.json({ error: "Төрлийн нэр шаардлагатай" }, 400);
+  const rows = await database().prepare("SELECT id, genres FROM contents WHERE genres != ''").all<{ id: string; genres: string }>();
+  const updates = rows.results.flatMap((row) => {
+    const next = String(row.genres || "").split(",").map((value) => value.trim()).filter(Boolean).filter((value) => value.toLocaleLowerCase() !== name.toLocaleLowerCase()).join(", ");
+    return next === row.genres ? [] : [database().prepare("UPDATE contents SET genres=? WHERE id=?").bind(next, row.id)];
+  });
+  if (updates.length) await database().batch(updates);
+  return c.json({ ok: true, updated: updates.length });
 });
 
 api.get("/admin/anilist", async (c) => {
