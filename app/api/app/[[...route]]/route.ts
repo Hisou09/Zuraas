@@ -3,7 +3,7 @@ import { database, ensureSchema, ensureUser, isAdmin, mediaBucket } from "../../
 import { catalog } from "../../../data/catalog";
 
 const api = new Hono().basePath("/api/app");
-api.use("*", async (_c, next) => { await ensureSchema(); await next(); });
+api.use("*", async (c, next) => { if(!c.req.header("oai-authenticated-user-email"))return c.json({error:"Нэвтрэх шаардлагатай"},401);await ensureSchema(); await next(); });
 api.use("/admin",async(c,next)=>{if(!await isAdmin(c.req.raw))return c.json({error:"Админ эрх шаардлагатай"},403);await next()});
 api.use("/admin/*",async(c,next)=>{if(!await isAdmin(c.req.raw))return c.json({error:"Админ эрх шаардлагатай"},403);await next()});
 

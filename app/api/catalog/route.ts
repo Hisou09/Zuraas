@@ -5,6 +5,7 @@ import { database } from "../../../db/runtime";
 const api = new Hono().basePath("/api");
 
 api.get("/catalog", async (c) => {
+  if(!c.req.header("oai-authenticated-user-email"))return c.json({error:"Нэвтрэх шаардлагатай"},401);
   const query = (c.req.query("q") ?? "").toLowerCase();
   const type = c.req.query("type");
   let databaseItems: typeof catalog = [];
