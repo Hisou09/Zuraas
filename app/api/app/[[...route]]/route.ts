@@ -45,7 +45,7 @@ api.get("/admin", async (c) => {
     database().prepare("SELECT COALESCE(SUM(amount), 0) AS total FROM analytics_events WHERE event_type = 'payment'"),
     database().prepare(`SELECT COUNT(*) AS count FROM library_items WHERE content_id IN (${mangaIds}) OR content_id IN (SELECT id FROM contents WHERE type != 'anime')`),
     database().prepare("SELECT bank_name AS bankName, account_number AS accountNumber, account_holder AS accountHolder, promotion, global_discount AS globalDiscount, accent_color AS accentColor FROM vip_settings WHERE id = 1"),
-    database().prepare("SELECT id, title, type, status, image, description, adult, created_at AS createdAt FROM contents ORDER BY created_at DESC"),
+    database().prepare("SELECT id, title, type, status, image, description, adult, episode_count AS episodeCount, created_at AS createdAt FROM contents ORDER BY created_at DESC"),
     database().prepare("SELECT facebook, instagram, youtube, discord, telegram FROM social_settings WHERE id = 1"),
   ]);
   const packages = await database().prepare("SELECT id, name, duration_days AS durationDays, price, active FROM vip_packages ORDER BY id").all();
