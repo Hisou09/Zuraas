@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { Chrome } from "../../components/Chrome";
 import { Comments, TitleActions } from "../../components/TitleInteractions";
+import { EntrySearch } from "../../components/EntrySearch";
 import { catalog, type CatalogItem } from "../../data/catalog";
 import { database, ensureSchema, ensureUser } from "../../../db/runtime";
 import { headers } from "next/headers";
@@ -50,6 +51,7 @@ export default async function TitlePage({params}:{params:Promise<{id:string}>}){
     </section>
     <div className="detail-columns clean-detail-columns">
       <section className="entries" id={isAnime?"episodes":"chapters"}>
+        <EntrySearch/>
         <div className="detail-heading"><h2>{isAnime?"Ангиуд":"Бүлгүүд"}</h2><label><span>⌕</span><input placeholder={isAnime?"Анги хайх...":"Бүлэг хайх..."}/></label></div>
         {isAnime?<div className="episode-list">{entries.map(episode=>{const key=mediaKeys(episode.mediaKeys)[0];return <a href={!hasVip?"/vip":key?`/api/app/media/${encodeURIComponent(key)}`:"#episodes"} key={episode.id}><div className="episode-thumb"><img src={item.image} alt=""/><span>EP {episode.number}</span></div><div><b>Анги {episode.number}</b><p>Зөвхөн VIP эрхтэй хэрэглэгч үзнэ</p><small>{!hasVip?"♔ VIP эрх шаардлагатай":key?"▶ Шууд үзэх":"Бичлэг ороогүй"}</small></div></a>})}</div>:<div className="chapter-table">{entries.map(episode=><a href={`/read/${item.id}/${episode.number}`} key={episode.id}><span>{episode.number}</span><b>Бүлэг {episode.number}</b><small>{episode.access==="vip"?"VIP ♔":"Унших →"}</small></a>)}</div>}
       </section>
