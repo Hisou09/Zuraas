@@ -53,7 +53,7 @@ api.get("/admin", async (c) => {
   const mangaIds = catalog.filter((item) => item.type !== "anime").map((item) => `'${item.id.replaceAll("'", "''")}'`).join(",") || "''";
   const [users, comments, reports, views, revenue, bookmarks, vip, contents, social] = await database().batch([
     database().prepare("SELECT id, email, display_name AS displayName, role, usercode, vip_until AS vipUntil, created_at AS createdAt FROM users ORDER BY id DESC LIMIT 200"),
-    database().prepare("SELECT id, content_id AS contentId, display_name AS displayName, body, created_at AS createdAt FROM comments ORDER BY id DESC LIMIT 200"),
+    database().prepare("SELECT cm.id, cm.content_id AS contentId, ct.title AS contentTitle, ct.image AS contentImage, cm.user_email AS userEmail, cm.display_name AS displayName, u.role AS userRole, u.avatar_key AS avatarKey, cm.body, cm.created_at AS createdAt FROM comments cm LEFT JOIN contents ct ON ct.id=cm.content_id LEFT JOIN users u ON u.email=cm.user_email ORDER BY cm.id DESC LIMIT 200"),
     database().prepare("SELECT r.id, r.content_id AS contentId, c.title AS contentTitle, r.chapter_number AS chapterNumber, r.user_email AS userEmail, r.issue_type AS issueType, r.details, r.status, r.created_at AS createdAt FROM error_reports r LEFT JOIN contents c ON c.id=r.content_id ORDER BY CASE WHEN r.status='open' THEN 0 ELSE 1 END, r.id DESC LIMIT 300"),
     database().prepare("SELECT COUNT(*) AS count FROM analytics_events WHERE event_type = 'view'"),
     database().prepare("SELECT COALESCE(SUM(amount), 0) AS total FROM analytics_events WHERE event_type = 'payment'"),
@@ -81,7 +81,13 @@ api.get("/admin", async (c) => {
     }
   }
   const genres = [...genreCounts.entries()].map(([name, contentCount]) => ({ name, contentCount })).sort((a, b) => a.name.localeCompare(b.name));
-  return c.json({ users: users.results, comments: comments.results, reports: reports.results, packages: packages.results, vip: vip.results[0], contents: contents.results, genres, social: social.results[0], periods: periodResults, analytics: { visits: Number((views.results[0] as { count?: number })?.count || 0), users: users.results.length, revenue: Number((revenue.results[0] as { total?: number })?.total || 0), bookmarks: Number((bookmarks.results[0] as { count?: number })?.count || 0) } });
+  const commentRows = (comments.results as Record<string, unknown>[]).map((row) => { const fallback = catalog.find((item) => item.id === row.contentId); return { ...row, contentTitle: row.contentTitle || fallback?.title || row.contentId, contentImage: row.contentImage || fallback?.image || null, avatarUrl: row.avatarKey ? `/api/app/media/${encodeURIComponent(String(row.avatarKey))}` : null, avatarKey: undefined }; });
+  return c.json({ users: users.results, comments: commentRows, reports: reports.results, packages: packages.results, vip: vip.results[0], contents: contents.results, genres, social: social.results[0], periods: periodResults, analytics: { visits: Number((views.results[0] as { count?: number })?.count || 0), users: users.results.length, revenue: Number((revenue.results[0] as { total?: number })?.total || 0), bookmarks: Number((bookmarks.results[0] as { count?: number })?.count || 0) } });
+});
+
+api.delete("/admin/comment/:id", async (c) => {
+  const result = await database().prepare("DELETE FROM comments WHERE id=?").bind(Number(c.req.param("id"))).run();
+  return c.json({ ok: true, changed: result.meta.changes });
 });
 
 api.put("/admin/report/:id", async (c) => {
