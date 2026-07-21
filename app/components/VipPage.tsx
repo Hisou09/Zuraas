@@ -11,7 +11,7 @@ type VipData = {
 };
 type SessionData = { user?: { usercode?:string } };
 
-export function VipPage() {
+export function VipPurchaseFlow({usercode:providedUsercode}:{usercode?:string}) {
   const [data,setData]=useState<VipData|null>(null);
   const [selected,setSelected]=useState<number|null>(null);
   const [usercode,setUsercode]=useState("------");
@@ -24,17 +24,17 @@ export function VipPage() {
     ]).then(([vip,session]:[VipData,SessionData|null])=>{
       setData(vip);
       if(vip.packages.length)setSelected(vip.packages[0].id);
-      if(session?.user?.usercode)setUsercode(session.user.usercode);
+      if(providedUsercode)setUsercode(providedUsercode);
+      else if(session?.user?.usercode)setUsercode(session.user.usercode);
     }).catch(()=>null);
-  },[]);
+  },[providedUsercode]);
 
   const settings=data?.settings||{bankName:"Хаан банк",accountNumber:"0000 0000 0000",accountHolder:"Зураас ХХК",promotion:"",globalDiscount:0,accentColor:"#ffbd00"};
   const active=useMemo(()=>data?.packages.find(p=>p.id===selected)||data?.packages[0],[data,selected]);
   const pay=active?Math.round(active.price*(1-(settings.globalDiscount||0)/100)):0;
   const copy=async(value:string,key:string)=>{try{await navigator.clipboard.writeText(value);setCopied(key);window.setTimeout(()=>setCopied(""),1400)}catch{setCopied("")}};
 
-  return <Chrome><main className="vip-page vip-checkout-page" style={{"--vip-accent":"#ffbd00"} as CSSProperties}>
-    <div className="vip-purchase-flow">
+  return <div className="vip-purchase-flow">
       <section className="vip-package-grid" aria-label="VIP эрхийн багцууд">
         {data?.packages.map((pkg,index)=>{const current=selected===pkg.id;const price=Math.round(pkg.price*(1-settings.globalDiscount/100));return <button className={current?"selected":""} key={pkg.id} onClick={()=>setSelected(pkg.id)}>
           <i>{current?<Check size={20}/>:<Sparkles size={18}/>}</i>
@@ -62,6 +62,9 @@ export function VipPage() {
           <ol><li><b>{pay.toLocaleString()}₮</b>-ийг дээрх данс руу шилжүүлнэ.</li><li>Утга дээр зөвхөн өөрийн төлбөрийн кодоо бичнэ.</li><li>Төлбөр шалгагдсаны дараа админ VIP эрхийг идэвхжүүлнэ.</li></ol>
         </article>
       </section>
-    </div>
-  </main></Chrome>;
+  </div>;
+}
+
+export function VipPage() {
+  return <Chrome><main className="vip-page vip-checkout-page" style={{"--vip-accent":"#ffbd00"} as CSSProperties}><VipPurchaseFlow/></main></Chrome>;
 }
