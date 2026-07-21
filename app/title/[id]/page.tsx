@@ -1,42 +1,19 @@
-import { Chrome } from "../../components/Chrome";
-import { catalog } from "../../data/catalog";
 import type { CSSProperties } from "react";
+import { Chrome } from "../../components/Chrome";
 import { Comments, TitleActions } from "../../components/TitleInteractions";
+import { catalog, type CatalogItem } from "../../data/catalog";
+import { database, ensureSchema } from "../../../db/runtime";
 
-export function generateStaticParams() {
-  return catalog.map((item) => ({ id: item.id }));
-}
+export function generateStaticParams(){return catalog.map(item=>({id:item.id}))}
 
-export default async function TitlePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const item = catalog.find((entry) => entry.id === id) ?? catalog[0];
-  const isAnime = item.type === "anime";
-  const similar = catalog.filter((entry) => entry.type === item.type && entry.id !== item.id).slice(0, 7);
-  const total = isAnime ? Math.min(item.episodes ?? 12, 12) : Math.min(item.chapters ?? 12, 12);
-  const description = isAnime
-    ? "Энэхүү бүтээл нь хүч, нөхөрлөл, сонголтын үнэ цэнийг харуулсан адал явдалт түүх. Шинэ анги бүр Монгол хадмалтайгаар нэмэгдэнэ."
-    : "Өнгөрсөн амьдралын алдаа, шинэ боломж хоёрын дунд гол дүр өөрийн хувь тавиланг дахин бичнэ. Монгол орчуулгатай бүлгүүдийг дарааллаар нь уншаарай.";
-
-  return <Chrome><main className="detail-page">
-    <section className="title-hero" style={{ "--hero-image": `url(${item.image})` } as CSSProperties}>
-      <div className="title-backdrop" /><div className="title-gradient" />
-      <div className="title-intro"><img src={item.image} alt={`${item.title} cover`} /><div><small>{item.originalTitle}</small><h1>{item.title}</h1><div className="title-stats"><b>{Math.round(item.rating * 10)}%</b><b>{item.year}</b><b>{item.status}</b></div><p>{description}</p><TitleActions contentId={item.id} isAnime={isAnime} /></div></div>
-    </section>
-
-    {isAnime && <section className="relations"><div className="detail-heading"><h2>Холбоотой бүтээл</h2><button>Бүгдийг үзэх</button></div><div className="relation-grid">{similar.slice(0,3).map((entry) => <a href={`/title/${entry.id}`} key={entry.id}><img src={entry.image} alt="" /><div><small>SIDE_STORY</small><b>{entry.title}</b><span>SPECIAL</span></div></a>)}</div></section>}
-
-    <div className="detail-columns">
-      <section className="entries"><div className="detail-heading"><h2>{isAnime ? "Ангиуд" : "Бүлгүүд"}</h2><label><span>⌕</span><input placeholder={isAnime ? "Анги хайх..." : "Бүлэг хайх..."} /></label></div>
-        {isAnime ? <div className="episode-list">{Array.from({ length: total }, (_, i) => total - i).slice(0,6).map((number) => <a href="#player" key={number}><div className="episode-thumb"><img src={item.image} alt="" /><span>Ep {number}</span></div><div><b>Episode {number}</b><p>Монгол хадмалтай анги.</p><small>▣ &nbsp; {40 + number * 3} views</small></div></a>)}</div>
-        : <div className="chapter-table">{Array.from({ length: total }, (_, i) => i + 1).map((number) => <a href="#reader" key={number}><span>{number}</span><b>Chapter {number}</b><small>Унших →</small></a>)}</div>}
-      </section>
-
-      <aside className="detail-side"><h2>Бусад</h2><div className="info-box"><small>Төрөл</small><div>{item.genres.map((genre) => <span key={genre}>{genre}</span>)}</div><small>Статус</small><div><span>{item.status}</span><span>{item.year}</span></div><small>Бусад нэр</small><div><span>{item.originalTitle}</span></div></div><div className="discussion-title"><h2>Хэлэлцүүлэг ›</h2><button>＋ Үүсгэх</button></div><div className="discussion">Шинэ хэлэлцүүлэг эхлүүлэх</div></aside>
-    </div>
-
-    {!isAnime && <section className="characters"><div className="detail-heading"><h2>Дүрүүд</h2><button>Бүгдийг үзэх</button></div><div className="character-grid">{["Гол дүр","Туслах дүр","Багш","Өрсөлдөгч","Холбоотон","Нууцлаг дүр"].map((role,i) => <div key={role}><img src={similar[i % similar.length]?.image ?? item.image} alt="" /><span><b>{role}</b><small>{i === 0 ? "Main" : "Supporting"}</small></span></div>)}</div></section>}
-
-    <Comments contentId={item.id} />
-    <section className="more-like"><div className="detail-heading"><h2>Төстэй бүтээлүүд</h2></div><div className="mini-row">{similar.map((entry) => <a href={`/title/${entry.id}`} key={entry.id}><img src={entry.image} alt="" /><b>{entry.title}</b><span>{entry.status}</span></a>)}</div></section>
-  </main></Chrome>;
+type Episode={id:number;number:number;access:string;publishAt:string|null;mediaKeys:string};
+export default async function TitlePage({params}:{params:Promise<{id:string}>}){
+  const {id}=await params; let item:CatalogItem&{description?:string}=catalog.find(e=>e.id===id)??catalog[0]; let savedEpisodes:Episode[]=[];
+  try{await ensureSchema();const row=await database().prepare("SELECT id,title,original_title AS originalTitle,type,status,year,episode_count AS count,rating,genres,image,description FROM contents WHERE id=?").bind(id).first<Record<string,any>>();if(row){item={id:String(row.id),title:String(row.title),originalTitle:String(row.originalTitle),type:row.type as CatalogItem["type"],status:String(row.status),year:Number(row.year),rating:Number(row.rating),genres:String(row.genres).split(",").filter(Boolean),image:String(row.image),description:String(row.description),...(row.type==="anime"?{episodes:Number(row.count)}:{chapters:Number(row.count)})};const eps=await database().prepare("SELECT id,number,access,publish_at AS publishAt,media_keys AS mediaKeys FROM episodes WHERE content_id=? AND (publish_at IS NULL OR publish_at<=CURRENT_TIMESTAMP) ORDER BY number DESC").bind(id).all();savedEpisodes=eps.results as unknown as Episode[]}}catch{/* static catalog remains available */}
+  const isAnime=item.type==="anime";const similar=catalog.filter(e=>e.type===item.type&&e.id!==item.id).slice(0,7);const fallbackTotal=isAnime?Math.min(item.episodes??12,12):Math.min(item.chapters??12,12);const description=item.description||"Энэхүү бүтээл нь адал явдал, нөхөрлөл, сонголтын үнэ цэнийг харуулсан сонирхолтой түүх. Монгол орчуулгатай шинэ анги, бүлгүүд тогтмол нэмэгдэнэ.";
+  const entries=savedEpisodes.length?savedEpisodes:Array.from({length:fallbackTotal},(_,i)=>({id:i+1,number:isAnime?fallbackTotal-i:i+1,access:"registered",publishAt:null,mediaKeys:"[]"}));
+  return <Chrome><main className="detail-page"><section className="title-hero" style={{"--hero-image":`url(${item.image})`} as CSSProperties}><div className="title-backdrop"/><div className="title-gradient"/><div className="title-intro"><img src={item.image} alt={`${item.title} cover`}/><div><small>{item.originalTitle}</small><h1>{item.title}</h1><div className="title-stats"><b>{Math.round(item.rating*10)}%</b><b>{item.year}</b><b>{item.status}</b></div><p>{description}</p><TitleActions contentId={item.id} isAnime={isAnime}/></div></div></section>
+  {isAnime&&<section className="relations"><div className="detail-heading"><h2>Холбоотой бүтээл</h2><button>Бүгдийг үзэх</button></div><div className="relation-grid">{similar.slice(0,3).map(e=><a href={`/title/${e.id}`} key={e.id}><img src={e.image} alt=""/><div><small>SIDE_STORY</small><b>{e.title}</b><span>SPECIAL</span></div></a>)}</div></section>}
+  <div className="detail-columns"><section className="entries"><div className="detail-heading"><h2>{isAnime?"Ангиуд":"Бүлгүүд"}</h2><label><span>⌕</span><input placeholder={isAnime?"Анги хайх...":"Бүлэг хайх..."}/></label></div>{isAnime?<div className="episode-list">{entries.map(ep=>{const keys=JSON.parse(ep.mediaKeys||"[]") as string[];return <a href={keys[0]?`/api/app/media/${keys[0]}`:"#player"} key={ep.id}><div className="episode-thumb"><img src={item.image} alt=""/><span>Ep {ep.number}</span></div><div><b>Episode {ep.number}</b><p>{ep.access==="vip"?"Зөвхөн VIP хэрэглэгч үзнэ":"Бүртгэлтэй хэрэглэгч үзнэ"}</p><small>▶ Монгол хадмал</small></div></a>})}</div>:<div className="chapter-table">{entries.map(ep=><a href="#reader" key={ep.id}><span>{ep.number}</span><b>Chapter {ep.number}</b><small>{ep.access==="vip"?"VIP ♔":"Унших →"}</small></a>)}</div>}</section><aside className="detail-side"><h2>Бусад</h2><div className="info-box"><small>Төрөл</small><div>{item.genres.map(g=><span key={g}>{g}</span>)}</div><small>Статус</small><div><span>{item.status}</span><span>{item.year}</span></div><small>Бусад нэр</small><div><span>{item.originalTitle}</span></div></div></aside></div>
+  <Comments contentId={item.id}/><section className="more-like"><div className="detail-heading"><h2>Төстэй бүтээлүүд</h2></div><div className="mini-row">{similar.map(e=><a href={`/title/${e.id}`} key={e.id}><img src={e.image} alt=""/><b>{e.title}</b><span>{e.status}</span></a>)}</div></section></main></Chrome>;
 }

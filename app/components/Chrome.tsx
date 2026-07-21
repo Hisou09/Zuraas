@@ -5,7 +5,7 @@ import type { FormEvent, ReactNode } from "react";
 import { catalog } from "../data/catalog";
 
 type ChromeProps = { children: ReactNode; searchValue?: string; onSearchChange?: (value: string) => void };
-type Session = { user: { email: string; displayName: string }; notifications: { id: number; title: string; body: string; isRead: number; createdAt: string }[] };
+type Session = { user: { email: string; displayName: string; usercode?: string; vipUntil?: string }; notifications: { id: number; title: string; body: string; isRead: number; createdAt: string }[] };
 
 function NavItem({ href, icon, label, badge, pathname }: { href: string; icon: string; label: string; badge?: string; pathname: string }) {
   const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -56,7 +56,7 @@ export function Chrome({ children, searchValue, onSearchChange }: ChromeProps) {
           <button className="bell" aria-label="Мэдэгдэл" onClick={() => { setNoticeOpen(!noticeOpen); setProfileOpen(false); }}>♧{session?.notifications.some((item) => !item.isRead) && <i />}</button>
           <button className="avatar" aria-label="Хэрэглэгчийн профайл" onClick={() => { setProfileOpen(!profileOpen); setNoticeOpen(false); }}>{initials}</button>
           {noticeOpen && <div className="notification-popover"><header><div><b>Мэдэгдэл</b><small>Бүгдийг уншсан</small></div><button onClick={() => setNoticeOpen(false)}>×</button></header>{session?.notifications.length ? <div className="notification-list">{session.notifications.map((item) => <article key={item.id}><i>♧</i><div><b>{item.title}</b><p>{item.body}</p><small>{item.createdAt}</small></div></article>)}</div> : <div className="notification-empty"><span>♧</span><b>Мэдэгдэл байхгүй байна</b><p>VIP эрхийн өөрчлөлт болон таны сэтгэгдэлд ирсэн хариунууд энд харагдана.</p></div>}</div>}
-          {profileOpen && <div className="profile-popover"><div className="profile-head"><span>{initials}</span><div><b>{session?.user.displayName || "Зураас хэрэглэгч"}</b><small>{session?.user.email || "Нэвтэрсэн хэрэглэгч"}</small></div></div><a href="/library">Миний сан</a><a href="/history">Сүүлд үзсэн</a><a href="/vip">VIP эрх</a><a href="/signout-with-chatgpt?return_to=/">Гарах</a></div>}
+          {profileOpen && <div className="profile-popover"><div className="profile-head"><span>{initials}</span><div><b>{session?.user.displayName || "Зураас хэрэглэгч"}</b><small>{session?.user.email || "Нэвтэрсэн хэрэглэгч"}</small>{session?.user.usercode && <code>USERCODE · {session.user.usercode}</code>}</div></div><a href="/library">Миний сан</a><a href="/history">Сүүлд үзсэн</a><a href="/vip">VIP эрх</a><a href="/signout-with-chatgpt?return_to=/">Гарах</a></div>}
         </div>
       </header>{children}
     </div>

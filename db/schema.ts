@@ -6,6 +6,8 @@ export const users = sqliteTable("users", {
   email: text("email").notNull().unique(),
   displayName: text("display_name").notNull(),
   role: text("role").notNull().default("member"),
+  usercode: text("usercode").notNull().unique(),
+  vipUntil: text("vip_until"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
@@ -20,6 +22,9 @@ export const contents = sqliteTable("contents", {
   rating: real("rating").notNull().default(0),
   genres: text("genres").notNull().default(""),
   image: text("image").notNull(),
+  description: text("description").notNull().default(""),
+  adult: integer("adult", { mode: "boolean" }).notNull().default(false),
+  anilistId: integer("anilist_id"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
@@ -61,9 +66,28 @@ export const vipSettings = sqliteTable("vip_settings", {
   bankName: text("bank_name").notNull(),
   accountNumber: text("account_number").notNull(),
   accountHolder: text("account_holder").notNull(),
-  headline: text("headline").notNull(),
   promotion: text("promotion").notNull().default(""),
+  globalDiscount: integer("global_discount").notNull().default(0),
   accentColor: text("accent_color").notNull().default("#8b6cf6"),
+});
+
+export const episodes = sqliteTable("episodes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  contentId: text("content_id").notNull(),
+  number: real("number").notNull(),
+  access: text("access").notNull().default("registered"),
+  publishAt: text("publish_at"),
+  mediaKeys: text("media_keys").notNull().default("[]"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const socialSettings = sqliteTable("social_settings", {
+  id: integer("id").primaryKey(),
+  facebook: text("facebook").notNull().default(""),
+  instagram: text("instagram").notNull().default(""),
+  youtube: text("youtube").notNull().default(""),
+  discord: text("discord").notNull().default(""),
+  telegram: text("telegram").notNull().default(""),
 });
 
 export const vipPackages = sqliteTable("vip_packages", {
