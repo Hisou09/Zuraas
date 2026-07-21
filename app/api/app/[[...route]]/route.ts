@@ -126,7 +126,31 @@ api.post("/admin/content", async (c) => {
   return c.json({ ok: true, id });
 });
 
-api.get("/admin/content/:id", async (c) => { const content = await database().prepare("SELECT * FROM contents WHERE id=?").bind(c.req.param("id")).first(); const episodes = await database().prepare("SELECT id, number, access, publish_at AS publishAt, media_keys AS mediaKeys FROM episodes WHERE content_id=? ORDER BY number DESC").bind(c.req.param("id")).all(); return c.json({ content, episodes: episodes.results }); });
+api.get("/admin/content/:id", async (c) => { const content = await database().prepare("SELECT id,title,type,status,image,description,adult,episode_count AS episodeCount,created_at AS createdAt FROM contents WHERE id=?").bind(c.req.param("id")).first(); const episodes = await database().prepare("SELECT id, number, access, publish_at AS publishAt, media_keys AS mediaKeys, created_at AS createdAt FROM episodes WHERE content_id=? ORDER BY number DESC").bind(c.req.param("id")).all(); return c.json({ content, episodes: episodes.results }); });
+
+api.put("/admin/content/:id", async (c) => {
+  const item = await c.req.json<{ title: string; status: string; description: string }>();
+  const status = String(item.status || "").trim();
+  if (!item.title?.trim() || !["Ongoing", "On-Going", "Completed", "Hiatus"].includes(status)) return c.json({ error: "Бүтээлийн мэдээлэл буруу байна" }, 400);
+  await database().prepare("UPDATE contents SET title=?,status=?,description=? WHERE id=?").bind(item.title.trim(), status, String(item.description || "").trim(), c.req.param("id")).run();
+  return c.json({ ok: true });
+});
+
+api.delete("/admin/content/:id", async (c) => {
+  const id = c.req.param("id");
+  const episodeRows = await database().prepare("SELECT media_keys AS mediaKeys FROM episodes WHERE content_id=?").bind(id).all<{ mediaKeys: string }>();
+  const keys = episodeRows.results.flatMap((row) => { try { return JSON.parse(row.mediaKeys || "[]") as string[]; } catch { return []; } });
+  await Promise.allSettled(keys.map((key) => mediaBucket().delete(key)));
+  await database().batch([
+    database().prepare("DELETE FROM episodes WHERE content_id=?").bind(id),
+    database().prepare("DELETE FROM comments WHERE content_id=?").bind(id),
+    database().prepare("DELETE FROM error_reports WHERE content_id=?").bind(id),
+    database().prepare("DELETE FROM library_items WHERE content_id=?").bind(id),
+    database().prepare("DELETE FROM watch_history WHERE content_id=?").bind(id),
+    database().prepare("DELETE FROM contents WHERE id=?").bind(id),
+  ]);
+  return c.json({ ok: true });
+});
 
 api.post("/admin/episode", async (c) => {
   await ensureUser(c.req.raw);
@@ -136,6 +160,26 @@ api.post("/admin/episode", async (c) => {
   for (const file of files) { const key = `${contentId}-${number}-${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "-")}`; await mediaBucket().put(key, file.stream(), { httpMetadata: { contentType: file.type } }); keys.push(key); }
   await database().batch([database().prepare("INSERT INTO episodes (content_id,number,access,publish_at,media_keys) VALUES (?,?,?,?,?)").bind(contentId, number, access, publishAt, JSON.stringify(keys)), database().prepare("UPDATE contents SET episode_count=episode_count+1 WHERE id=?").bind(contentId)]);
   return c.json({ ok: true, keys });
+});
+
+api.put("/admin/episode/:id", async (c) => {
+  const item = await c.req.json<{ number: number; access: string }>();
+  const number = Number(item.number); const access = item.access === "vip" ? "vip" : "registered";
+  if (!Number.isFinite(number) || number <= 0) return c.json({ error: "Дугаар буруу байна" }, 400);
+  await database().prepare("UPDATE episodes SET number=?,access=? WHERE id=?").bind(number, access, Number(c.req.param("id"))).run();
+  return c.json({ ok: true });
+});
+
+api.delete("/admin/episode/:id", async (c) => {
+  const episode = await database().prepare("SELECT content_id AS contentId,media_keys AS mediaKeys FROM episodes WHERE id=?").bind(Number(c.req.param("id"))).first<{ contentId: string; mediaKeys: string }>();
+  if (!episode) return c.json({ error: "Анги олдсонгүй" }, 404);
+  let keys: string[] = []; try { keys = JSON.parse(episode.mediaKeys || "[]") as string[]; } catch { keys = []; }
+  await Promise.allSettled(keys.map((key) => mediaBucket().delete(key)));
+  await database().batch([
+    database().prepare("DELETE FROM episodes WHERE id=?").bind(Number(c.req.param("id"))),
+    database().prepare("UPDATE contents SET episode_count=(SELECT COUNT(*) FROM episodes WHERE content_id=?) WHERE id=?").bind(episode.contentId, episode.contentId),
+  ]);
+  return c.json({ ok: true });
 });
 
 api.get("/media/:key", async (c) => { const object = await mediaBucket().get(c.req.param("key")); if (!object) return c.notFound(); const headers = new Headers(); object.writeHttpMetadata(headers); headers.set("etag", object.httpEtag); return new Response(object.body, { headers }); });
