@@ -1,0 +1,5 @@
+@media(max-width:720px){
+  body:has(.catalog-page) .catalog-page{padding-top:72px!important}
+  body:has(.catalog-page) .topbar>.account-actions{top:10px!important;right:11px!important}
+  body:has(.catalog-page) .catalog-search-row{position:relative;z-index:1}
+}
