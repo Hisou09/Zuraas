@@ -112,17 +112,22 @@ api.delete("/admin/genre", async (c) => {
 
 api.get("/admin/anilist", async (c) => {
   await ensureUser(c.req.raw);
-  const id = Number(c.req.query("id")); const type = c.req.query("type") === "anime" ? "ANIME" : "MANGA";
-  const response = await fetch("https://graphql.anilist.co", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: `query($id:Int,$type:MediaType){Media(id:$id,type:$type){id title{romaji english native} description(asHtml:false) status startDate{year} averageScore genres coverImage{extraLarge} isAdult}}`, variables: { id, type } }) });
-  if (!response.ok) return c.json({ error: "AniList import амжилтгүй" }, 400);
-  const json = await response.json() as { data?: { Media?: Record<string, any> } }; return c.json({ item: json.data?.Media });
+  const search = String(c.req.query("query") || "").trim(); const type = c.req.query("type") === "anime" ? "ANIME" : "MANGA";
+  if (search.length < 2) return c.json({ error: "Хайх нэрээ оруулна уу" }, 400);
+  const query = `query($search:String,$type:MediaType){Page(page:1,perPage:10){media(search:$search,type:$type,sort:SEARCH_MATCH){id title{romaji english native} description(asHtml:false) type status startDate{year} averageScore genres coverImage{extraLarge large} bannerImage isAdult countryOfOrigin characters(page:1,perPage:12,sort:[ROLE,RELEVANCE,ID]){edges{role node{id name{full} image{large}}}}}}}`;
+  const response = await fetch("https://graphql.anilist.co", { method: "POST", headers: { "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ query, variables: { search, type } }) });
+  if (!response.ok) return c.json({ error: response.status === 429 ? "AniList хүсэлт түр хязгаарлагдлаа. Дахин оролдоно уу." : "AniList хайлт амжилтгүй" }, 400);
+  const json = await response.json() as { data?: { Page?: { media?: Record<string, any>[] } }; errors?: { message:string }[] };
+  if (json.errors?.length) return c.json({ error: json.errors[0].message || "AniList хайлт амжилтгүй" }, 400);
+  const items=(json.data?.Page?.media||[]).map(item=>({...item,siteType:item.type==="ANIME"?"anime":item.countryOfOrigin==="KR"?"manhwa":"manga"}));
+  return c.json({ items });
 });
 
 api.post("/admin/content", async (c) => {
   await ensureUser(c.req.raw);
-  const item = await c.req.json<{ id?: string; title: string; originalTitle?: string; type: string; status: string; year?: number; rating?: number; genres?: string; image?: string; description?: string; adult?: boolean; anilistId?: number }>();
+  const item = await c.req.json<{ id?: string; title: string; originalTitle?: string; type: string; status: string; year?: number; rating?: number; genres?: string; image?: string; bannerImage?: string; characters?: string; description?: string; adult?: boolean; anilistId?: number }>();
   const id = (item.id || item.title).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `content-${Date.now()}`;
-  await database().prepare("INSERT INTO contents (id,title,original_title,type,status,year,episode_count,rating,genres,image,description,adult,anilist_id) VALUES (?,?,?,?,?,?,0,?,?,?,?,?,?)").bind(id, item.title, item.originalTitle || item.title, item.type, item.status, item.year || new Date().getFullYear(), item.rating || 0, item.genres || "", item.image || "https://placehold.co/600x900/15171d/78859a?text=ZURAAS", item.description || "", item.adult ? 1 : 0, item.anilistId || null).run();
+  await database().prepare("INSERT INTO contents (id,title,original_title,type,status,year,episode_count,rating,genres,image,banner_image,characters,description,adult,anilist_id) VALUES (?,?,?,?,?,?,0,?,?,?,?,?,?,?,?)").bind(id, item.title, item.originalTitle || item.title, item.type, item.status, item.year || new Date().getFullYear(), item.rating || 0, item.genres || "", item.image || "https://placehold.co/600x900/15171d/78859a?text=ZURAAS", item.bannerImage || "", item.characters || "[]", item.description || "", item.adult ? 1 : 0, item.anilistId || null).run();
   return c.json({ ok: true, id });
 });
 

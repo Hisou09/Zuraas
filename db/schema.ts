@@ -45,6 +45,8 @@ export const contents = sqliteTable("contents", {
   rating: real("rating").notNull().default(0),
   genres: text("genres").notNull().default(""),
   image: text("image").notNull(),
+  bannerImage: text("banner_image").notNull().default(""),
+  characters: text("characters").notNull().default("[]"),
   description: text("description").notNull().default(""),
   adult: integer("adult", { mode: "boolean" }).notNull().default(false),
   anilistId: integer("anilist_id"),
