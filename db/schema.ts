@@ -75,6 +75,17 @@ export const comments = sqliteTable("comments", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const errorReports = sqliteTable("error_reports", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  contentId: text("content_id").notNull(),
+  chapterNumber: real("chapter_number").notNull(),
+  userEmail: text("user_email").notNull(),
+  issueType: text("issue_type").notNull(),
+  details: text("details").notNull().default(""),
+  status: text("status").notNull().default("open"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const notifications = sqliteTable("notifications", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userEmail: text("user_email").notNull(),
