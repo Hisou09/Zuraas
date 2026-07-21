@@ -41,9 +41,9 @@ export function Chrome({ children, searchValue, onSearchChange }: ChromeProps) {
     <aside className={`sidebar ${menuOpen ? "open" : ""}`}>
       <a className="identity" href="/"><img src="/logo.png" alt="Зураас лого" /><div><b>ЗУРААС</b><small>ANIME & MANHWA</small></div></a>
       <nav>
-        <section><div className="nav-title"><span>ЦЭС</span><i /></div><NavItem href="/" icon="⌂" label="Нүүр" pathname={pathname} /><NavItem href="/#catalog" icon="⊞" label="Бүх бүтээл" pathname={pathname} /><NavItem href="/vip" icon="♔" label="VIP эрх" badge="PRO" pathname={pathname} /></section>
+        <section><div className="nav-title"><span>ЦЭС</span><i /></div><NavItem href="/" icon="⌂" label="Нүүр" pathname={pathname} /><NavItem href="/#catalog" icon="⊘" label="Бүх бүтээл" pathname={pathname} /><NavItem href="/vip" icon="♔" label="VIP эрх" badge="PRO" pathname={pathname} /></section>
         <section><div className="nav-title"><span>МИНИЙ САН</span><i /></div><NavItem href="/history" icon="◷" label="Сүүлд үзсэн" pathname={pathname} /><NavItem href="/library" icon="▥" label="Миний сан" pathname={pathname} /></section>
-        <section><div className="nav-title"><span>АДМИН</span><i /></div><NavItem href="/admin" icon="♢" label="Удирдлага" pathname={pathname} /></section>
+        <section><div className="nav-title"><span>АДМИН</span><i /></div><NavItem href="/admin" icon="⬡" label="Удирдлага" pathname={pathname} /></section>
       </nav>
       <div className="sidebar-bottom"><button className="random" onClick={randomTitle}><span>⤨ &nbsp; Хийцгүй</span><b>RANDOM</b></button><a className="plain" href="#facebook"><i>●</i> Фэйсбүүк хуудас</a><a className="plain" href="#settings"><i>⚙</i> Тохиргоо</a></div>
     </aside>
