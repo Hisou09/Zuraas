@@ -7,9 +7,15 @@ import { Chrome } from "./components/Chrome";
 import type { CatalogItem } from "./data/catalog";
 
 function itemTimestamp(item:CatalogItem){return item.type==="anime"?item.createdAt:item.latestAt??item.createdAt}
+function timestampMs(value?:string){
+  if(!value)return 0;
+  const normalized=/[zZ]|[+-]\d\d:\d\d$/.test(value)?value:`${value.replace(" ","T")}Z`;
+  const parsed=new Date(normalized).getTime();
+  return Number.isFinite(parsed)?parsed:0;
+}
 function relativeTime(value?:string){
   if(!value)return "Саяхан";
-  const elapsed=Math.max(0,Date.now()-new Date(value).getTime());
+  const elapsed=Math.max(0,Date.now()-timestampMs(value));
   const minutes=Math.floor(elapsed/60_000);
   if(minutes<1)return "Саяхан";
   if(minutes<60)return `${minutes} минутын өмнө`;
@@ -41,9 +47,9 @@ export default function Home(){
   const result=useMemo(()=>{const needle=query.toLowerCase();return items.filter(item=>`${item.title} ${item.originalTitle} ${item.genres.join(" ")}`.toLowerCase().includes(needle))},[items,query]);
   const anime=result.filter(item=>item.type==="anime");const manga=result.filter(item=>item.type!=="anime");const recent=recentIds.map(id=>items.find(item=>item.id===id)).filter((item):item is CatalogItem=>Boolean(item));
   const latest=useMemo(()=>{
-    const newestAnime=[...anime].sort((a,b)=>new Date(b.createdAt??0).getTime()-new Date(a.createdAt??0).getTime()).slice(0,5);
-    const newestManga=[...manga].sort((a,b)=>new Date(b.latestAt??b.createdAt??0).getTime()-new Date(a.latestAt??a.createdAt??0).getTime()).slice(0,5);
-    return [...newestAnime,...newestManga].sort((a,b)=>new Date(itemTimestamp(b)??0).getTime()-new Date(itemTimestamp(a)??0).getTime());
+    const newestAnime=[...anime].sort((a,b)=>timestampMs(b.createdAt)-timestampMs(a.createdAt)).slice(0,5);
+    const newestManga=[...manga].sort((a,b)=>timestampMs(b.latestAt??b.createdAt)-timestampMs(a.latestAt??a.createdAt)).slice(0,5);
+    return [...newestAnime,...newestManga].sort((a,b)=>timestampMs(itemTimestamp(b))-timestampMs(itemTimestamp(a)));
   },[anime,manga]);
   return <Chrome searchValue={query} onSearchChange={setQuery}><main className="home-content"><Shelf title="Анимэ" items={anime} more="/catalog?type=anime"/><Shelf title="Манга" items={manga} more="/catalog?type=manga"/><Shelf title="Сүүлд нэмэгдсэн" items={latest}/>{recent.length>0&&<div className="recent-home-section"><Shelf title="Сүүлд үзсэн" items={recent} more="/history"/></div>}{result.length===0&&<div className="empty"><strong>Илэрц олдсонгүй</strong><span>Өөр түлхүүр үгээр хайгаад үзээрэй.</span></div>}</main></Chrome>;
 }

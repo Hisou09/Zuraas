@@ -2,6 +2,7 @@ import { MangaReader } from "../../../components/MangaReader";
 import { catalog } from "../../../data/catalog";
 import { database, ensureSchema, ensureUser } from "../../../../db/runtime";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 type ReaderEpisode={id:number;number:number;access:string;mediaKeys:string};
 
@@ -28,10 +29,12 @@ export default async function ReaderPage({params}:{params:Promise<{id:string;cha
       const incoming=await headers();
       const user=await ensureUser(new Request("https://zuraas.local",{headers:incoming}));
       const profile=await database().prepare("SELECT vip_until AS vipUntil FROM users WHERE email=?").bind(user.email).first<{vipUntil:string|null}>();
-      locked=current.access==="vip"&&(!profile?.vipUntil||new Date(profile.vipUntil).getTime()<=Date.now());
+      const vipUntil=profile?.vipUntil?new Date(`${profile.vipUntil.replace(" ","T")}Z`).getTime():0;
+      locked=current.access==="vip"&&vipUntil<=Date.now();
       if(!locked)pages=(JSON.parse(current.mediaKeys||"[]") as string[]).map(key=>`/api/app/media/${encodeURIComponent(key)}`);
     }
   }catch{/* Static catalog preview remains available. */}
+  if(locked)redirect("/vip");
   const staticItem=catalog.find(item=>item.id===id);
   if(!chapters.length)chapters=Array.from({length:Math.min(staticItem?.chapters||12,12)},(_,index)=>index+1).reverse();
   if(!pages.length&&!locked&&cover)pages=[cover];

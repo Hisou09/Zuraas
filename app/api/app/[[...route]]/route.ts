@@ -163,7 +163,9 @@ api.delete("/admin/content/:id", async (c) => {
 
 api.post("/admin/episode", async (c) => {
   await ensureUser(c.req.raw);
-  const form = await c.req.parseBody({ all: true }); const contentId = String(form.contentId || ""); const number = Number(form.number); const access = String(form.access || "registered"); const publishAt = form.publishAt ? String(form.publishAt) : null;
+  const form = await c.req.parseBody({ all: true }); const contentId = String(form.contentId || ""); const number = Number(form.number); const requestedAccess = String(form.access || "registered"); const publishAt = form.publishAt ? String(form.publishAt) : null;
+  const content=await database().prepare("SELECT type FROM contents WHERE id=?").bind(contentId).first<{type:string}>();
+  const access=content?.type==="anime"?"vip":requestedAccess==="vip"?"vip":"registered";
   const rawFiles = form.files; const files = (Array.isArray(rawFiles) ? rawFiles : rawFiles ? [rawFiles] : []).filter((file): file is File => file instanceof File);
   const keys: string[] = [];
   for (const file of files) { const key = `${contentId}-${number}-${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "-")}`; await mediaBucket().put(key, file.stream(), { httpMetadata: { contentType: file.type } }); keys.push(key); }
@@ -173,8 +175,10 @@ api.post("/admin/episode", async (c) => {
 
 api.put("/admin/episode/:id", async (c) => {
   const item = await c.req.json<{ number: number; access: string }>();
-  const number = Number(item.number); const access = item.access === "vip" ? "vip" : "registered";
+  const number = Number(item.number);
   if (!Number.isFinite(number) || number <= 0) return c.json({ error: "Дугаар буруу байна" }, 400);
+  const episode=await database().prepare("SELECT c.type FROM episodes e JOIN contents c ON c.id=e.content_id WHERE e.id=?").bind(Number(c.req.param("id"))).first<{type:string}>();
+  const access=episode?.type==="anime"?"vip":item.access === "vip" ? "vip" : "registered";
   await database().prepare("UPDATE episodes SET number=?,access=? WHERE id=?").bind(number, access, Number(c.req.param("id"))).run();
   return c.json({ ok: true });
 });
@@ -191,7 +195,19 @@ api.delete("/admin/episode/:id", async (c) => {
   return c.json({ ok: true });
 });
 
-api.get("/media/:key", async (c) => { const object = await mediaBucket().get(c.req.param("key")); if (!object) return c.notFound(); const headers = new Headers(); object.writeHttpMetadata(headers); headers.set("etag", object.httpEtag); return new Response(object.body, { headers }); });
+api.get("/media/:key", async (c) => {
+  const key=c.req.param("key");
+  const protectedMedia=await database().prepare("SELECT e.access,c.type FROM episodes e JOIN contents c ON c.id=e.content_id JOIN json_each(e.media_keys) media ON media.value=? LIMIT 1").bind(key).first<{access:string;type:string}>();
+  if(protectedMedia&&(protectedMedia.type==="anime"||protectedMedia.access==="vip")){
+    const email=c.req.header("oai-authenticated-user-email");
+    if(!email)return c.redirect("/vip");
+    const user=await ensureUser(c.req.raw);
+    const profile=await database().prepare("SELECT vip_until AS vipUntil FROM users WHERE email=?").bind(user.email).first<{vipUntil:string|null}>();
+    const vipUntil=profile?.vipUntil?new Date(`${profile.vipUntil.replace(" ","T")}Z`).getTime():0;
+    if(vipUntil<=Date.now())return c.redirect("/vip");
+  }
+  const object = await mediaBucket().get(key); if (!object) return c.notFound(); const responseHeaders = new Headers(); object.writeHttpMetadata(responseHeaders); responseHeaders.set("etag", object.httpEtag); return new Response(object.body, { headers:responseHeaders });
+});
 
 api.post("/admin/vip", async (c) => { await ensureUser(c.req.raw); const v = await c.req.json<{ bankName: string; accountNumber: string; accountHolder: string; promotion: string; globalDiscount: number; accentColor?: string }>(); await database().prepare("UPDATE vip_settings SET bank_name=?,account_number=?,account_holder=?,promotion=?,global_discount=?,accent_color=? WHERE id=1").bind(v.bankName, v.accountNumber, v.accountHolder, v.promotion, Number(v.globalDiscount) || 0, v.accentColor || "#8b6cf6").run(); return c.json({ ok: true }); });
 api.post("/admin/package", async (c) => { await ensureUser(c.req.raw); const p = await c.req.json<{ name: string; durationDays: number; price: number }>(); await database().prepare("INSERT INTO vip_packages (name,duration_days,price,discount_percent,active) VALUES (?,?,?,0,1)").bind(p.name, Number(p.durationDays), Number(p.price)).run(); return c.json({ ok: true }); });
