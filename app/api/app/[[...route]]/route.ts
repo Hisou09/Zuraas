@@ -115,8 +115,12 @@ api.get("/admin/anilist", async (c) => {
   const search = String(c.req.query("query") || "").trim(); const type = c.req.query("type") === "anime" ? "ANIME" : "MANGA";
   if (search.length < 2) return c.json({ error: "Хайх нэрээ оруулна уу" }, 400);
   const query = `query($search:String,$type:MediaType){Page(page:1,perPage:10){media(search:$search,type:$type,sort:SEARCH_MATCH){id title{romaji english native} description(asHtml:false) type status startDate{year} averageScore genres coverImage{extraLarge large} bannerImage isAdult countryOfOrigin characters(page:1,perPage:12,sort:[ROLE,RELEVANCE,ID]){edges{role node{id name{full} image{large}}}}}}}`;
-  const response = await fetch("https://graphql.anilist.co", { method: "POST", headers: { "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ query, variables: { search, type } }) });
-  if (!response.ok) return c.json({ error: response.status === 429 ? "AniList хүсэлт түр хязгаарлагдлаа. Дахин оролдоно уу." : "AniList хайлт амжилтгүй" }, 400);
+  const response = await fetch("https://graphql.anilist.co/", { method: "POST", headers: { "content-type": "application/json", accept: "application/json", "user-agent": "Zuraas/1.0 (admin catalog sync)" }, body: JSON.stringify({ query, variables: { search, type } }) });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    console.error("AniList search failed", response.status, detail.slice(0, 500));
+    return c.json({ error: response.status === 429 ? "AniList хүсэлт түр хязгаарлагдлаа. Түр хүлээгээд дахин оролдоно уу." : `AniList холболт амжилтгүй (${response.status})` }, 502);
+  }
   const json = await response.json() as { data?: { Page?: { media?: Record<string, any>[] } }; errors?: { message:string }[] };
   if (json.errors?.length) return c.json({ error: json.errors[0].message || "AniList хайлт амжилтгүй" }, 400);
   const items=(json.data?.Page?.media||[]).map(item=>({...item,siteType:item.type==="ANIME"?"anime":item.countryOfOrigin==="KR"?"manhwa":"manga"}));
