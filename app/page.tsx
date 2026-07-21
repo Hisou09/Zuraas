@@ -1,11 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 import { Chrome } from "./components/Chrome";
 import type { CatalogItem } from "./data/catalog";
 
-function Card({item}:{item:CatalogItem}){const count=item.type==="anime"?`${item.episodes??0} анги`:`${item.chapters??0} бүлэг`;return <a className="card" href={`/title/${item.id}`}><div className="cover"><img src={item.image} alt={`${item.title} cover`} loading="lazy"/><span>▶</span></div><h3>{item.title}</h3><div className="badges"><span>{item.status}</span><small>{count}</small></div></a>}
-function Shelf({title,items,more}:{title:string;items:CatalogItem[];more?:string}){const row=useRef<HTMLDivElement>(null);const move=(d:number)=>row.current?.scrollBy({left:d*row.current.clientWidth*.86,behavior:"smooth"});return <section className="shelf"><div className="shelf-title"><h2>{title}</h2><span>{items.length} бүтээл</span><div className="shelf-controls">{more&&<a href={more}>Бүгдийг үзэх</a>}<button onClick={()=>move(-1)} aria-label="Өмнөх">‹</button><button onClick={()=>move(1)} aria-label="Дараах">›</button></div></div><div className="card-row" ref={row}>{items.map(item=><Card item={item} key={item.id}/>)}</div></section>}
+function Card({item}:{item:CatalogItem}){const count=item.type==="anime"?`${item.episodes??0} анги`:`${item.chapters??0} бүлэг`;return <a className="card" href={`/title/${item.id}`}><div className="cover"><img src={item.image} alt={`${item.title} cover`} loading="lazy" draggable={false}/><span>▶</span></div><h3>{item.title}</h3><div className="badges"><span>{item.status}</span><small>{count}</small></div></a>}
+function Shelf({title,items,more}:{title:string;items:CatalogItem[];more?:string}){
+  const row=useRef<HTMLDivElement>(null);const drag=useRef({active:false,startX:0,scrollLeft:0,moved:false});
+  const move=(direction:number)=>{const container=row.current;if(!container)return;const card=container.querySelector<HTMLElement>(".card");const gap=parseFloat(getComputedStyle(container).columnGap)||12;container.scrollBy({left:direction*((card?.offsetWidth||container.clientWidth)+gap),behavior:"smooth"})};
+  const pointerDown=(event:ReactPointerEvent<HTMLDivElement>)=>{if(event.pointerType==="mouse"&&event.button!==0)return;const container=row.current;if(!container)return;drag.current={active:true,startX:event.clientX,scrollLeft:container.scrollLeft,moved:false};container.setPointerCapture(event.pointerId);container.classList.add("dragging")};
+  const pointerMove=(event:ReactPointerEvent<HTMLDivElement>)=>{const container=row.current;if(!container||!drag.current.active)return;const distance=event.clientX-drag.current.startX;if(Math.abs(distance)>5)drag.current.moved=true;container.scrollLeft=drag.current.scrollLeft-distance};
+  const pointerEnd=(event:ReactPointerEvent<HTMLDivElement>)=>{const container=row.current;if(!container)return;drag.current.active=false;if(container.hasPointerCapture(event.pointerId))container.releasePointerCapture(event.pointerId);container.classList.remove("dragging")};
+  const stopDraggedClick=(event:ReactMouseEvent<HTMLDivElement>)=>{if(!drag.current.moved)return;event.preventDefault();event.stopPropagation();drag.current.moved=false};
+  return <section className="shelf"><div className="shelf-title"><h2>{title}</h2><span>{items.length} бүтээл</span><div className="shelf-controls">{more&&<a href={more}>Бүгдийг үзэх</a>}<button onClick={()=>move(-1)} aria-label="Өмнөх">‹</button><button onClick={()=>move(1)} aria-label="Дараах">›</button></div></div><div className="card-row" ref={row} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerEnd} onPointerCancel={pointerEnd} onClickCapture={stopDraggedClick}>{items.map(item=><Card item={item} key={item.id}/>)}</div></section>
+}
 
 export default function Home(){
   const [items,setItems]=useState<CatalogItem[]>([]);const [recentIds,setRecentIds]=useState<string[]>([]);const [query,setQuery]=useState("");
