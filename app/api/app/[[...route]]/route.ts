@@ -59,7 +59,7 @@ api.get("/admin", async (c) => {
     database().prepare("SELECT COALESCE(SUM(amount), 0) AS total FROM analytics_events WHERE event_type = 'payment'"),
     database().prepare(`SELECT COUNT(*) AS count FROM library_items WHERE content_id IN (${mangaIds}) OR content_id IN (SELECT id FROM contents WHERE type != 'anime')`),
     database().prepare("SELECT bank_name AS bankName, account_number AS accountNumber, account_holder AS accountHolder, promotion, global_discount AS globalDiscount, accent_color AS accentColor FROM vip_settings WHERE id = 1"),
-    database().prepare("SELECT id, title, type, status, genres, image, description, adult, episode_count AS episodeCount, created_at AS createdAt FROM contents ORDER BY created_at DESC"),
+    database().prepare("SELECT id, title, original_title AS originalTitle, type, status, year, genres, image, banner_image AS bannerImage, characters, description, adult, anilist_id AS anilistId, episode_count AS episodeCount, created_at AS createdAt FROM contents ORDER BY created_at DESC"),
     database().prepare("SELECT facebook, instagram, youtube, discord, telegram FROM social_settings WHERE id = 1"),
   ]);
   const packages = await database().prepare("SELECT id, name, duration_days AS durationDays, price, active FROM vip_packages ORDER BY id").all();
@@ -131,13 +131,13 @@ api.post("/admin/content", async (c) => {
   return c.json({ ok: true, id });
 });
 
-api.get("/admin/content/:id", async (c) => { const content = await database().prepare("SELECT id,title,type,status,image,description,adult,episode_count AS episodeCount,created_at AS createdAt FROM contents WHERE id=?").bind(c.req.param("id")).first(); const episodes = await database().prepare("SELECT id, number, access, publish_at AS publishAt, media_keys AS mediaKeys, created_at AS createdAt FROM episodes WHERE content_id=? ORDER BY number DESC").bind(c.req.param("id")).all(); return c.json({ content, episodes: episodes.results }); });
+api.get("/admin/content/:id", async (c) => { const content = await database().prepare("SELECT id,title,original_title AS originalTitle,type,status,year,genres,image,banner_image AS bannerImage,characters,description,adult,anilist_id AS anilistId,episode_count AS episodeCount,created_at AS createdAt FROM contents WHERE id=?").bind(c.req.param("id")).first(); const episodes = await database().prepare("SELECT id, number, access, publish_at AS publishAt, media_keys AS mediaKeys, created_at AS createdAt FROM episodes WHERE content_id=? ORDER BY number DESC").bind(c.req.param("id")).all(); return c.json({ content, episodes: episodes.results }); });
 
 api.put("/admin/content/:id", async (c) => {
-  const item = await c.req.json<{ title: string; status: string; description: string }>();
+  const item = await c.req.json<{ title: string; originalTitle?:string; type:string; status: string; year?:number; genres?:string; image?:string; bannerImage?:string; characters?:string; description: string; adult?:boolean; anilistId?:number|null }>();
   const status = String(item.status || "").trim();
-  if (!item.title?.trim() || !["Ongoing", "On-Going", "Completed", "Hiatus"].includes(status)) return c.json({ error: "Бүтээлийн мэдээлэл буруу байна" }, 400);
-  await database().prepare("UPDATE contents SET title=?,status=?,description=? WHERE id=?").bind(item.title.trim(), status, String(item.description || "").trim(), c.req.param("id")).run();
+  if (!item.title?.trim() || !["anime","manga","manhwa"].includes(item.type) || !["Ongoing", "On-Going", "Completed", "Hiatus"].includes(status)) return c.json({ error: "Бүтээлийн мэдээлэл буруу байна" }, 400);
+  await database().prepare("UPDATE contents SET title=?,original_title=?,type=?,status=?,year=?,genres=?,image=?,banner_image=?,characters=?,description=?,adult=?,anilist_id=? WHERE id=?").bind(item.title.trim(), String(item.originalTitle||item.title).trim(), item.type, status, Number(item.year)||new Date().getFullYear(), String(item.genres||"").trim(), String(item.image||"").trim(), String(item.bannerImage||"").trim(), String(item.characters||"[]"), String(item.description||"").trim(), item.adult?1:0, item.anilistId||null, c.req.param("id")).run();
   return c.json({ ok: true });
 });
 
