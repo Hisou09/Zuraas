@@ -47,7 +47,7 @@ export default async function TitlePage({params}:{params:Promise<{id:string}>}){
   return <Chrome><main className={`detail-page clean-detail ${isAnime?"anime-detail":"manga-detail"}`}>
     <section className="title-hero" style={{"--hero-image":`url(${bannerImage})`} as CSSProperties}>
       <div className="title-backdrop"/><div className="title-gradient"/>
-      <div className="title-intro"><img src={item.image} alt={`${item.title} нүүр зураг`}/><div><span className="detail-kind">{isAnime?"АНИМЭ":"МАНГА"}</span><h1>{item.title}</h1><div className="mobile-title-meta"><span>{item.status}</span><span>{isAnime?`${item.episodes??entries.length} анги`:`${item.chapters??entries.length} бүлэг`}</span></div><p>{description}</p><TitleActions contentId={item.id} primaryHref={primaryHref} contentType={isAnime?"anime":"manga"}/></div></div>
+      <div className="title-intro"><img src={item.image} alt={`${item.title} нүүр зураг`}/><div><span className="detail-kind">{isAnime?"АНИМЭ":"МАНГА"}</span><h1>{item.title}</h1><div className="mobile-title-meta"><span>{item.status}</span><span>{isAnime?`${item.episodes??entries.length} анги`:`${item.chapters??entries.length} бүлэг`}</span><span>{item.year||"—"}</span><span>{isAnime?"Анимэ":"Манга"}</span></div><p>{description}</p><div className="title-keywords">{item.genres.slice(0,8).map(genre=><span key={genre}>{genre}</span>)}</div><TitleActions contentId={item.id} primaryHref={primaryHref} contentType={isAnime?"anime":"manga"}/></div></div>
     </section>
     <div className="detail-columns clean-detail-columns">
       <section className="entries" id={isAnime?"episodes":"chapters"}>
