@@ -43,10 +43,6 @@ export function ensureSchema(){
     const currentSeed=await db.prepare("SELECT value FROM app_settings WHERE key='catalog_seed_version'").first<{value:string}>();
     if(currentSeed?.value!==seedVersion){
       const statements=[
-        db.prepare("DELETE FROM error_reports"),
-        db.prepare("DELETE FROM comments"),
-        db.prepare("DELETE FROM library_items"),
-        db.prepare("DELETE FROM watch_history"),
         db.prepare("DELETE FROM episodes"),
         db.prepare("DELETE FROM contents"),
         ...catalog.map(item=>db.prepare("INSERT INTO contents (id,title,original_title,type,status,year,episode_count,rating,genres,image,banner_image,characters,description,adult,anilist_id) VALUES (?,?,?,?,?,?,0,?,?,?,?,'[]',?,0,?)").bind(item.id,item.title,item.originalTitle,item.type,item.status,item.year,item.rating,item.genres.join(", "),item.image,item.bannerImage||"",item.description||"",item.anilistId||null)),
