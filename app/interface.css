@@ -44,6 +44,9 @@ button,input,select,textarea{font-family:inherit}.card-row{cursor:grab;touch-act
 .content-create-toolbar .admin-back{margin:0!important;display:grid!important}
 .content-create-toolbar .admin-back:before,.content-create-toolbar .admin-back:after{content:none!important;display:none!important}
 .content-create-toolbar .admin-back svg{width:22px;height:22px}
+.episode-manager>.admin-back:before{content:"‹"!important;display:block!important;font-size:29px!important;line-height:1!important;transform:translateY(-1px)}
+.episode-manager>.admin-back:after{content:none!important;display:none!important}
+.episode-manager>.admin-back{margin:0 0 16px!important}
 .content-create-toolbar .content-kind-tabs{margin:0;display:flex;align-items:center;gap:8px}
 .content-create-toolbar .content-kind-tabs button{height:48px;padding:0 22px;border-radius:12px;font-size:11px;font-weight:700}
 .advanced-content-form>label>textarea[name="description"]{min-height:110px;overflow:hidden;resize:none;line-height:1.6;transition:height .12s ease,border-color .2s ease}

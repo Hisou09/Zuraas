@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { Chrome } from "../../components/Chrome";
 import { EntryDirectory, type DetailEntry } from "../../components/EntryDirectory";
 import { Comments, TitleActions } from "../../components/TitleInteractions";
+import { MobileBackButton } from "../../components/MobileBackButton";
 import { catalog, type CatalogItem } from "../../data/catalog";
 import { database, ensureSchema, ensureUser } from "../../../db/runtime";
 import { headers } from "next/headers";
@@ -45,20 +46,24 @@ export default async function TitlePage({params}:{params:Promise<{id:string}>}){
   const description=item.description||"Монгол орчуулгатай шинэ анги, бүлгүүд тогтмол нэмэгдэнэ.";
 
   return <Chrome><main className={`detail-page clean-detail ${isAnime?"anime-detail":"manga-detail"}`}>
+    <MobileBackButton/>
     <section className="title-hero" style={{"--hero-image":`url(${bannerImage})`} as CSSProperties}>
       <div className="title-backdrop"/><div className="title-gradient"/>
-      <div className="title-intro"><img src={item.image} alt={`${item.title} нүүр зураг`}/><div><span className="detail-kind">{isAnime?"АНИМЭ":"МАНГА"}</span><h1>{item.title}</h1><div className="mobile-title-meta"><span>{item.status}</span><span>{isAnime?`${item.episodes??entries.length} анги`:`${item.chapters??entries.length} бүлэг`}</span><span>{item.year||"—"}</span><span>{isAnime?"Анимэ":"Манга"}</span></div><p>{description}</p><div className="title-keywords">{item.genres.slice(0,8).map(genre=><span key={genre}>{genre}</span>)}</div><TitleActions contentId={item.id} primaryHref={primaryHref} contentType={isAnime?"anime":"manga"}/></div></div>
+      <div className="title-intro">
+        <div className="title-poster-column"><img src={item.image} alt={`${item.title} нүүр зураг`} fetchPriority="high" decoding="async"/><TitleActions contentId={item.id} primaryHref={primaryHref} contentType={isAnime?"anime":"manga"}/></div>
+        <div className="title-copy"><h1>{item.title}</h1><div className="mobile-title-meta"><span>{item.status}</span><span>{isAnime?`${item.episodes??entries.length} анги`:`${item.chapters??entries.length} бүлэг`}</span><span>{item.year||"—"}</span></div><p>{description}</p><div className="title-keywords">{item.genres.slice(0,8).map(genre=><span key={genre}>{genre}</span>)}</div></div>
+      </div>
     </section>
     <div className="detail-columns clean-detail-columns">
       <section className="entries" id={isAnime?"episodes":"chapters"}>
         <EntryDirectory kind={isAnime?"anime":"manga"} contentId={item.id} cover={item.image} entries={entries} hasVip={hasVip}/>
+        <Comments contentId={item.id}/>
       </section>
       <aside className="detail-side">
         <h2>Түлхүүр сэдэв</h2>
         <div className="info-box keyword-box"><small>ТӨРӨЛ</small><div>{item.genres.map(genre=><span key={genre}>{genre}</span>)}</div><small>ТӨЛӨВ</small><div><span>{item.status}</span><span>{isAnime?"Анимэ":"Манга"}</span></div></div>
       </aside>
     </div>
-    <Comments contentId={item.id}/>
     {characters.length>0&&<section className="characters imported-characters"><div className="detail-heading character-heading"><div><small>БҮТЭЭЛИЙН</small><h2>Дүрүүд</h2></div><span>{characters.length}</span></div><div className="character-grid">{characters.slice(0,12).map(character=><article key={character.node.id}>{character.node.image.large?<img src={character.node.image.large} alt={character.node.name.full}/>:<span>{character.node.name.full.slice(0,1)}</span>}<div><b>{character.node.name.full}</b><small>{character.role==="MAIN"?"Гол дүр":character.role==="SUPPORTING"?"Туслах дүр":"Дүр"}</small></div></article>)}</div></section>}
     <section className="more-like"><div className="detail-heading"><h2>Төстэй бүтээлүүд</h2></div><div className="mini-row">{similar.map(entry=><a href={`/title/${entry.id}`} key={entry.id}><img src={entry.image} alt=""/><b>{entry.title}</b></a>)}</div></section>
   </main></Chrome>;

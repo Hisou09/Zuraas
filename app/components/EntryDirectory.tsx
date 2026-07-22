@@ -46,10 +46,7 @@ export function EntryDirectory({
 
   const noun = kind === "anime" ? "Анги" : "Бүлэг";
   return <div className="entry-directory">
-    <header className="entry-directory-head">
-      <span>{kind === "anime" ? "ҮЗЭХ" : "УНШИХ"}</span>
-      <div><h2>{kind === "anime" ? "АНГИУД" : "БҮЛГҮҮД"}</h2><b>{entries.length}</b></div>
-    </header>
+    <header className="entry-directory-head"><div><h2>{kind === "anime" ? "АНГИУД" : "БҮЛГҮҮД"}</h2><b>{entries.length}</b></div></header>
     <div className="entry-toolbar">
       <label><Search size={18}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`${noun} хайх...`}/></label>
       <button type="button" onClick={() => setOrder((value) => value === "newest" ? "oldest" : "newest")} aria-label={order === "newest" ? "Хуучнаас шинэ рүү эрэмбэлэх" : "Шинээс хуучин руу эрэмбэлэх"}>{order === "newest" ? <ArrowDown size={17}/> : <ArrowUp size={17}/>}<span>{order === "newest" ? "Шинэ эхэнд" : "Хуучин эхэнд"}</span></button>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { Bell, Camera, ChevronRight, Clock3, Crown, KeyRound, LogOut, MonitorSmartphone, UserRound, X } from "lucide-react";
+import { Camera, ChevronRight, Clock3, Crown, KeyRound, LogOut, MonitorSmartphone, UserRound } from "lucide-react";
 import { VipPurchaseFlow } from "./VipPage";
 
 type SettingsData = {
@@ -12,7 +12,6 @@ type SettingsData = {
   payments: { id: number; days: number; source: string; grantedAt: string; expiresAt: string | null }[];
 };
 type SettingsTab = "profile" | "vip" | "login";
-type Notice = { id: number; title: string; body: string; isRead: number; createdAt: string };
 
 const dateTime = (value: string | null) => value ? new Intl.DateTimeFormat("mn-MN", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value.replace(" ", "T") + (/Z$/.test(value) ? "" : "Z"))) : "—";
 
@@ -27,16 +26,11 @@ export function SettingsPage() {
   const [coverPreview, setCoverPreview] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [noticeOpen, setNoticeOpen] = useState(false);
-
   const load = async () => {
-    const [response, sessionResponse] = await Promise.all([fetch("/api/app/settings"), fetch("/api/app/session")]);
+    const response = await fetch("/api/app/settings");
     if (response.status === 401) { window.location.assign("/signout-with-chatgpt?return_to=/"); return; }
     const value = await response.json() as SettingsData;
-    const session = sessionResponse.ok ? await sessionResponse.json() : null;
     setData(value);
-    setNotices(session?.notifications || []);
     setDisplayName(value.profile.displayName);
     setContactEmail(value.profile.contactEmail);
     setAvatarPreview(value.profile.avatarUrl || "");
@@ -63,12 +57,6 @@ export function SettingsPage() {
     setBusy(true); const response = await fetch("/api/app/settings/devices/logout-others", { method: "POST" }); setBusy(false);
     if (response.ok) { setMessage("Бусад төхөөрөмжүүдээс гарлаа"); await load(); } else setMessage("Төхөөрөмжөөс гаргахад алдаа гарлаа");
   };
-  const markNotices = async () => {
-    if (!notices.some(item => !item.isRead)) return;
-    const response = await fetch("/api/app/notifications/read-all", { method: "POST" });
-    if (response.ok) setNotices(current => current.map(item => ({ ...item, isRead: 1 })));
-  };
-
   const nav = [
     { id: "profile" as const, label: "Хувийн мэдээлэл", icon: UserRound },
     { id: "vip" as const, label: "VIP эрх", icon: Crown },
@@ -81,12 +69,7 @@ export function SettingsPage() {
     {message && <div className="settings-message">{message}</div>}
     <div className="settings-layout">
       <aside className="settings-nav">
-        {nav.map(({ id, label, icon: Icon, badge }) => <button className={tab === id ? "active" : ""} onClick={() => { setTab(id); setMessage(""); setNoticeOpen(false); }} key={id}><Icon size={17}/><span>{label}</span>{badge !== undefined && <b>{badge}</b>}<ChevronRight size={15}/></button>)}
-        <button className="settings-notice-button" onClick={() => setNoticeOpen(value => !value)} aria-label="Мэдэгдэл"><Bell size={19}/>{notices.some(item => !item.isRead) && <i/>}</button>
-        {noticeOpen && <div className="settings-notification-popover">
-          <header><div><b>Мэдэгдэл</b><button type="button" onClick={markNotices}>Бүгдийг унших</button></div><button type="button" onClick={() => setNoticeOpen(false)} aria-label="Хаах"><X size={18}/></button></header>
-          {notices.length ? <div>{notices.map(item => <article key={item.id} className={item.isRead ? "" : "unread"}><span><Bell size={15}/></span><div><b>{item.title}</b><p>{item.body}</p><small>{dateTime(item.createdAt)}</small></div></article>)}</div> : <section><Bell size={28}/><b>Мэдэгдэл хоосон байна</b><p>Одоогоор танд ирсэн шинэ мэдэгдэл алга.</p></section>}
-        </div>}
+        {nav.map(({ id, label, icon: Icon, badge }) => <button className={tab === id ? "active" : ""} onClick={() => { setTab(id); setMessage(""); }} key={id}><Icon size={17}/><span>{label}</span>{badge !== undefined && <b>{badge}</b>}<ChevronRight size={15}/></button>)}
       </aside>
       <section className="settings-content">
         {tab === "profile" && <>

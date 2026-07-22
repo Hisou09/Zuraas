@@ -6,10 +6,13 @@ export function database(): D1Database { if (!env.DB) throw new Error("D1 databa
 export function mediaBucket(): R2Bucket { if (!env.MEDIA) throw new Error("R2 media storage is unavailable"); return env.MEDIA; }
 
 let schemaReady: Promise<unknown>|null=null;
+const SCHEMA_VERSION=1;
 function randomUsercode(){const value=new Uint32Array(1);crypto.getRandomValues(value);return String(100000+(value[0]%900000));}
 export function ensureSchema(){
   if(schemaReady)return schemaReady;const db=database();
   schemaReady=(async()=>{
+    const version=await db.prepare("PRAGMA user_version").first<{user_version:number}>();
+    if(Number(version?.user_version||0)>=SCHEMA_VERSION)return true;
     const created=await db.batch([
       db.prepare("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT,email TEXT NOT NULL UNIQUE,display_name TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'member',usercode TEXT UNIQUE,vip_until TEXT,contact_email TEXT,avatar_key TEXT,cover_key TEXT,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),
       db.prepare("CREATE TABLE IF NOT EXISTS user_devices (device_id TEXT PRIMARY KEY,user_email TEXT NOT NULL,label TEXT NOT NULL,user_agent TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,last_seen_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,revoked_at TEXT)"),
@@ -50,6 +53,7 @@ export function ensureSchema(){
       ];
       await db.batch(statements);
     }
+    await db.prepare(`PRAGMA user_version = ${SCHEMA_VERSION}`).run();
     return created;
   })().catch(error=>{schemaReady=null;throw error});return schemaReady;
 }
