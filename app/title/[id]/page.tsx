@@ -16,7 +16,7 @@ export default async function TitlePage({params}:{params:Promise<{id:string}>}){
   const {id}=await params;
   let item:CatalogItem&{description?:string}=catalog.find(entry=>entry.id===id)??catalog[0];
   let savedEpisodes:Episode[]=[];
-  let bannerImage=item.image;
+  let bannerImage=item.bannerImage||item.image;
   let characters:Character[]=[];
   let hasVip=false;
   try{

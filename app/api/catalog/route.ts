@@ -46,7 +46,9 @@ api.get("/catalog", async (c) => {
     const timestamp = new Date(now - (offsetMinutes ?? (index + 1) * 24 * 60) * 60_000).toISOString();
     return { ...item, createdAt: timestamp, latestAt: timestamp };
   });
-  const items = [...databaseItems, ...demoItems].filter((item) => {
+  const merged = new Map(demoItems.map((item) => [item.id, item]));
+  databaseItems.forEach((item) => merged.set(item.id, item));
+  const items = [...merged.values()].filter((item) => {
     const matchesQuery = !query || `${item.title} ${item.originalTitle} ${item.genres.join(" ")}`.toLowerCase().includes(query);
     const matchesType = !type || type === "all" || item.type === type || (type === "manhwa" && item.type === "manga");
     return matchesQuery && matchesType;

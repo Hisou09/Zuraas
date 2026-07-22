@@ -10,29 +10,81 @@ export type CatalogItem = {
   rating: number;
   genres: string[];
   image: string;
+  bannerImage?: string;
+  description?: string;
+  anilistId?: number;
   createdAt?: string;
   latestAt?: string;
 };
 
 export const catalog: CatalogItem[] = [
-  { id:"smoking", title:"Smoking Behind the Supermarket with You", originalTitle:"Super no Ura de Yani Suu Futari", type:"anime", status:"On-Going", year:2026, episodes:12, rating:8.5, genres:["Comedy","Romance"], image:"https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx186312-TLuDDasq9PQH.jpg" },
-  { id:"tanya", title:"Saga of Tanya the Evil Season 2", originalTitle:"Youjo Senki II", type:"anime", status:"On-Going", year:2026, episodes:12, rating:8.7, genres:["Action","Fantasy"], image:"https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx135866-8WIVXWso8qFD.jpg" },
-  { id:"bleach", title:"BLEACH: Thousand-Year Blood War", originalTitle:"BLEACH: Sennen Kessen-hen", type:"anime", status:"TBA", year:2026, episodes:13, rating:9.1, genres:["Action","Supernatural"], image:"https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx269-d2GmRkJbMopq.png" },
-  { id:"chainsmoker", title:"Chainsmoker Cat", originalTitle:"Chainsmoker Cat", type:"anime", status:"On-Going", year:2026, episodes:12, rating:8.2, genres:["Comedy","Slice of Life"], image:"https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx199408-ocRWG4pRWl8f.png" },
-  { id:"black-torch-anime", title:"BLACK TORCH", originalTitle:"Black Torch", type:"anime", status:"On-Going", year:2026, episodes:12, rating:8.8, genres:["Action","Supernatural"], image:"https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx195600-moI0UFArtOme.jpg" },
-  { id:"madoka", title:"Puella Magi Madoka Magica the Movie", originalTitle:"Walpurgisnacht: Rising", type:"anime", status:"TBA", year:2026, episodes:1, rating:8.9, genres:["Drama","Fantasy"], image:"https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx151807-hTeZ1GlhL0Rr.jpg" },
-  { id:"polar", title:"You and I Are Polar Opposites Season 2", originalTitle:"Seihantai na Kimi to Boku 2", type:"anime", status:"On-Going", year:2026, episodes:13, rating:8.4, genres:["Romance","Comedy"], image:"https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx210031-TppgcHZh46LY.jpg" },
-  { id:"love-you", title:"I Want to Love You Till Your Dying Day", originalTitle:"Kimi ga Shinu made Koi wo Shitai", type:"anime", status:"On-Going", year:2026, episodes:13, rating:8.6, genres:["Drama","Romance"], image:"https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx202269-7KNj8s2fSsJJ.jpg" },
-  { id:"sparks", title:"Sparks of Tomorrow", originalTitle:"Ashita no Hibana", type:"anime", status:"On-Going", year:2026, episodes:13, rating:8.3, genres:["Action","Fantasy"], image:"https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx182205-q2AeO1owuQbO.jpg" },
-  { id:"skeleton", title:"Skeleton Knight in Another World Season 2", originalTitle:"Gaikotsu Kishi-sama II", type:"anime", status:"On-Going", year:2026, episodes:12, rating:8.1, genres:["Isekai","Fantasy"], image:"https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx185542-6a9LCWlLHa0T.jpg" },
-  { id:"mercenary", title:"The Regressed Mercenary Has a Plan", originalTitle:"Hoegwihan Yongbyeongeun Da Gyehoegi Itda", type:"manhwa", status:"On-Going", year:2025, chapters:83, rating:9.0, genres:["Action","Fantasy"], image:"https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx119257-WLz5q4Py6q9P.jpg" },
-  { id:"regression", title:"Absolute Regression", originalTitle:"Jeoldaehoegwi", type:"manhwa", status:"On-Going", year:2025, chapters:71, rating:9.2, genres:["Martial Arts","Fantasy"], image:"https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx117010-AvlAhKAa6dYJ.jpg" },
-  { id:"dandadan", title:"Dandadan", originalTitle:"Dandadan", type:"manga", status:"On-Going", year:2025, chapters:189, rating:9.1, genres:["Action","Comedy"], image:"https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx131586-2ETMdDiOH7vy.jpg" },
-  { id:"world-after-fall", title:"The World After the Fall", originalTitle:"Myeolmang Ihu-ui Segye", type:"manhwa", status:"On-Going", year:2025, chapters:172, rating:8.9, genres:["Action","Fantasy"], image:"https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx146870-p2qpHVdPdwf5.jpg" },
-  { id:"novels-extra", title:"The Novel's Extra", originalTitle:"Soseol Sok Extra", type:"manhwa", status:"On-Going", year:2025, chapters:121, rating:8.8, genres:["Action","School"], image:"https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx143624-rZRkCVNj4c3h.jpg" },
-  { id:"shepherd", title:"The Shepherd Wizard", originalTitle:"Yangchigi Mabeopsa", type:"manhwa", status:"On-Going", year:2025, chapters:94, rating:8.6, genres:["Fantasy","Adventure"], image:"https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx85143-5vQY1ErASlG9.jpg" },
-  { id:"entomologist", title:"The Sichuan Tang Clan’s Entomologist", originalTitle:"Sachondangga-ui Paribeolle", type:"manhwa", status:"On-Going", year:2026, chapters:57, rating:8.7, genres:["Martial Arts","Comedy"], image:"https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx87170-PKs5nnpWwM9f.jpg" },
-  { id:"eminence", title:"The Eminence in Shadow", originalTitle:"Kage no Jitsuryokusha ni Naritakute", type:"manga", status:"On-Going", year:2025, chapters:79, rating:8.9, genres:["Action","Comedy"], image:"https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx98270-k5QqdNzheKAm.jpg" },
-  { id:"max-level", title:"The Max Level Hero Strikes Back!", originalTitle:"Mallep Yeongung-nim Kkeseo Gwihwan Hasinda", type:"manhwa", status:"On-Going", year:2025, chapters:201, rating:8.5, genres:["Action","Fantasy"], image:"https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx113108-X2jWykIYUgGp.jpg" },
-  { id:"baskerville", title:"Revenge of the Baskerville Bloodhound", originalTitle:"Cheolhyeolgeomga Sanyanggae-ui Hoegwi", type:"manhwa", status:"On-Going", year:2025, chapters:102, rating:9.0, genres:["Action","Revenge"], image:"https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx145367-vWmLPJuOjMGz.jpg" }
+  {
+    id: "frieren-beyond-journeys-end", title: "Frieren: Beyond Journey’s End", originalTitle: "Sousou no Frieren", type: "anime", status: "Completed", year: 2023, episodes: 0, rating: 0,
+    genres: ["Adventure", "Drama", "Fantasy"], anilistId: 154587,
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx154587-qQTzQnEJJ3oB.jpg",
+    bannerImage: "https://s4.anilist.co/file/anilistcdn/media/anime/banner/154587-ivXNJ23SM1xB.jpg",
+    description: "The adventure is over, but life goes on for the elf mage Frieren. Decades after defeating the Demon King, she begins a new journey to understand the people whose lives pass so quickly beside her."
+  },
+  {
+    id: "jujutsu-kaisen", title: "JUJUTSU KAISEN", originalTitle: "Jujutsu Kaisen", type: "anime", status: "Completed", year: 2020, episodes: 0, rating: 0,
+    genres: ["Action", "Drama", "Supernatural"], anilistId: 113415,
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx113415-LHBAeoZDIsnF.jpg",
+    bannerImage: "https://s4.anilist.co/file/anilistcdn/media/anime/banner/113415-jQBSkxWAAk83.jpg",
+    description: "Yuji Itadori swallows a cursed object to save a friend and becomes the vessel of a terrifying curse. Guided by powerful sorcerers, he enters a school devoted to fighting supernatural threats."
+  },
+  {
+    id: "demon-slayer", title: "Demon Slayer: Kimetsu no Yaiba", originalTitle: "Kimetsu no Yaiba", type: "anime", status: "Completed", year: 2019, episodes: 0, rating: 0,
+    genres: ["Action", "Adventure", "Drama", "Fantasy", "Supernatural"], anilistId: 101922,
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101922-WBsBl0ClmgYL.jpg",
+    bannerImage: "https://s4.anilist.co/file/anilistcdn/media/anime/banner/101922-33MtJGsUSxga.jpg",
+    description: "After his family is attacked by demons, Tanjiro becomes a demon slayer in the hope of turning his sister Nezuko back into a human."
+  },
+  {
+    id: "attack-on-titan", title: "Attack on Titan", originalTitle: "Shingeki no Kyojin", type: "anime", status: "Completed", year: 2013, episodes: 0, rating: 0,
+    genres: ["Action", "Drama", "Fantasy", "Mystery"], anilistId: 16498,
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx16498-buvcRTBx4NSm.jpg",
+    bannerImage: "https://s4.anilist.co/file/anilistcdn/media/anime/banner/16498-8jpFCOcDmneX.jpg",
+    description: "Humanity lives behind enormous walls to survive the Titans. When the walls fall, Eren Yeager vows to fight back and uncover the truth of their world."
+  },
+  {
+    id: "one-punch-man-season-3", title: "One-Punch Man Season 3", originalTitle: "One Punch Man 3", type: "anime", status: "Completed", year: 2025, episodes: 0, rating: 0,
+    genres: ["Action", "Comedy", "Sci-Fi", "Supernatural"], anilistId: 153800,
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx153800-8SpzdHOaZCoU.jpg",
+    bannerImage: "https://s4.anilist.co/file/anilistcdn/media/anime/banner/153800-bgkLxE9SHmUi.jpg",
+    description: "Saitama returns as the Hero Association prepares to confront the Monster Association and the human monster Garou."
+  },
+  {
+    id: "last-dungeon-boonies", title: "Suppose a Kid from the Last Dungeon Boonies moved to a starter town?", originalTitle: "Tatoeba Last Dungeon Mae no Mura no Shounen", type: "anime", status: "Completed", year: 2021, episodes: 0, rating: 0,
+    genres: ["Adventure", "Comedy", "Fantasy"], anilistId: 112649,
+    image: "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx112649-Wdcxo6cQZbhx.jpg",
+    bannerImage: "https://s4.anilist.co/file/anilistcdn/media/anime/banner/112649-jonCCVLHopXa.jpg",
+    description: "Lloyd leaves his remote village to become an adventurer, unaware that growing up beside the world’s deadliest dungeon has made him extraordinarily powerful."
+  },
+  {
+    id: "solo-leveling-manhwa", title: "Solo Leveling", originalTitle: "Na Honjaman Level Up", type: "manhwa", status: "Completed", year: 2018, chapters: 0, rating: 0,
+    genres: ["Action", "Adventure", "Fantasy"], anilistId: 105398,
+    image: "https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx105398-b673Vt5ZSuz3.jpg",
+    bannerImage: "https://s4.anilist.co/file/anilistcdn/media/manga/banner/105398-4UrEhdqZukrg.jpg",
+    description: "The weakest hunter, Sung Jin-Woo, is chosen by a mysterious system that allows him alone to level up and grow beyond every known limit."
+  },
+  {
+    id: "dandadan-manga", title: "Dandadan", originalTitle: "Dandadan", type: "manga", status: "Ongoing", year: 2021, chapters: 0, rating: 0,
+    genres: ["Action", "Comedy", "Drama", "Romance", "Sci-Fi", "Supernatural"], anilistId: 132029,
+    image: "https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx132029-prGF4gePdSKv.jpg",
+    bannerImage: "https://s4.anilist.co/file/anilistcdn/media/manga/banner/132029-V1x9JAh3G8QK.jpg",
+    description: "Momo believes in ghosts but not aliens, while Okarun believes in aliens but not ghosts. Their challenge to prove each other wrong becomes a wild supernatural adventure."
+  },
+  {
+    id: "one-piece-manga", title: "One Piece", originalTitle: "ONE PIECE", type: "manga", status: "Ongoing", year: 1997, chapters: 0, rating: 0,
+    genres: ["Action", "Adventure", "Comedy", "Fantasy"], anilistId: 30013,
+    image: "https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx30013-BeslEMqiPhlk.jpg",
+    bannerImage: "https://s4.anilist.co/file/anilistcdn/media/manga/banner/30013-hbbRZqC5MjYh.jpg",
+    description: "Monkey D. Luffy sets out across the seas to gather a crew, discover the legendary One Piece, and become King of the Pirates."
+  },
+  {
+    id: "koigokoro-kyoumeichuu", title: "Koigokoro Kyoumeichuu", originalTitle: "恋心キョウメイ中", type: "manga", status: "Completed", year: 2009, chapters: 0, rating: 0,
+    genres: ["Romance"], anilistId: 52991,
+    image: "https://s4.anilist.co/file/anilistcdn/media/manga/cover/large/bx52991-R089mV09fnOc.png",
+    description: "A romance collection following Ritsuka, Kaze, and their changing relationships when a striking new teacher arrives."
+  }
 ];

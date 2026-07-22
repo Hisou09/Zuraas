@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { catalog } from "../app/data/catalog";
 export const OWNER_EMAIL="kanbara120@yahoo.com";
 
 export function database(): D1Database { if (!env.DB) throw new Error("D1 database is unavailable"); return env.DB; }
@@ -24,6 +25,7 @@ export function ensureSchema(){
       db.prepare("CREATE TABLE IF NOT EXISTS analytics_events (id INTEGER PRIMARY KEY AUTOINCREMENT,event_type TEXT NOT NULL,user_email TEXT,amount INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),
       db.prepare("CREATE TABLE IF NOT EXISTS episodes (id INTEGER PRIMARY KEY AUTOINCREMENT,content_id TEXT NOT NULL,number REAL NOT NULL,access TEXT NOT NULL DEFAULT 'registered',publish_at TEXT,media_keys TEXT NOT NULL DEFAULT '[]',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)"),
       db.prepare("CREATE TABLE IF NOT EXISTS social_settings (id INTEGER PRIMARY KEY,facebook TEXT NOT NULL DEFAULT '',instagram TEXT NOT NULL DEFAULT '',youtube TEXT NOT NULL DEFAULT '',discord TEXT NOT NULL DEFAULT '',telegram TEXT NOT NULL DEFAULT '')"),
+      db.prepare("CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY,value TEXT NOT NULL)"),
     ]);
     const addMissing=async(table:string,columns:Record<string,string>)=>{const info=await db.prepare(`PRAGMA table_info(${table})`).all();const names=new Set(info.results.map((row:any)=>String(row.name)));for(const [name,sql] of Object.entries(columns))if(!names.has(name))await db.prepare(`ALTER TABLE ${table} ADD COLUMN ${name} ${sql}`).run();};
     await addMissing("users",{usercode:"TEXT",vip_until:"TEXT",contact_email:"TEXT",avatar_key:"TEXT",cover_key:"TEXT"});
@@ -36,7 +38,23 @@ export function ensureSchema(){
       db.prepare("INSERT INTO vip_packages (name,duration_days,price,discount_percent,active) SELECT '7 хоног',7,4900,0,1 WHERE NOT EXISTS (SELECT 1 FROM vip_packages)"),
       db.prepare("INSERT INTO vip_packages (name,duration_days,price,discount_percent,active) SELECT 'Сарын эрх',30,12900,0,1 WHERE (SELECT COUNT(*) FROM vip_packages)=1"),
       db.prepare("INSERT INTO vip_packages (name,duration_days,price,discount_percent,active) SELECT 'Жилийн эрх',365,99000,0,1 WHERE (SELECT COUNT(*) FROM vip_packages)=2"),
-    ]);return created;
+    ]);
+    const seedVersion="catalog-2026-07-22-v1";
+    const currentSeed=await db.prepare("SELECT value FROM app_settings WHERE key='catalog_seed_version'").first<{value:string}>();
+    if(currentSeed?.value!==seedVersion){
+      const statements=[
+        db.prepare("DELETE FROM error_reports"),
+        db.prepare("DELETE FROM comments"),
+        db.prepare("DELETE FROM library_items"),
+        db.prepare("DELETE FROM watch_history"),
+        db.prepare("DELETE FROM episodes"),
+        db.prepare("DELETE FROM contents"),
+        ...catalog.map(item=>db.prepare("INSERT INTO contents (id,title,original_title,type,status,year,episode_count,rating,genres,image,banner_image,characters,description,adult,anilist_id) VALUES (?,?,?,?,?,?,0,?,?,?,?,'[]',?,0,?)").bind(item.id,item.title,item.originalTitle,item.type,item.status,item.year,item.rating,item.genres.join(", "),item.image,item.bannerImage||"",item.description||"",item.anilistId||null)),
+        db.prepare("INSERT INTO app_settings (key,value) VALUES ('catalog_seed_version',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(seedVersion),
+      ];
+      await db.batch(statements);
+    }
+    return created;
   })().catch(error=>{schemaReady=null;throw error});return schemaReady;
 }
 
