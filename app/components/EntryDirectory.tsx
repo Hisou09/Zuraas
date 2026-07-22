@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ArrowUpDown, Crown, Play, Search } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Crown, Play, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export type DetailEntry = {
@@ -52,7 +52,7 @@ export function EntryDirectory({
     </header>
     <div className="entry-toolbar">
       <label><Search size={18}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`${noun} хайх...`}/></label>
-      <button type="button" onClick={() => setOrder((value) => value === "newest" ? "oldest" : "newest")} aria-label="Дараалал солих"><ArrowUpDown size={17}/>{order === "newest" ? "Шинэ" : "Хуучин"}</button>
+      <button type="button" onClick={() => setOrder((value) => value === "newest" ? "oldest" : "newest")} aria-label={order === "newest" ? "Хуучнаас шинэ рүү эрэмбэлэх" : "Шинээс хуучин руу эрэмбэлэх"}>{order === "newest" ? <ArrowDown size={17}/> : <ArrowUp size={17}/>}<span>{order === "newest" ? "Шинэ эхэнд" : "Хуучин эхэнд"}</span></button>
     </div>
     <div className={`entry-list ${kind}`}>
       {visible.map((entry) => {

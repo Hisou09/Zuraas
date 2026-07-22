@@ -2,22 +2,24 @@
 
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { Bookmark, Check, Play } from "lucide-react";
 
 type Comment = { id: number; displayName: string; body: string; createdAt: string };
 
-export function TitleActions({ contentId, primaryHref }: { contentId: string; primaryHref: string }) {
+export function TitleActions({ contentId, primaryHref, contentType }: { contentId: string; primaryHref: string; contentType: "anime"|"manga" }) {
   const [saved, setSaved] = useState(false);
+  const [progress,setProgress]=useState(0);
   const [message, setMessage] = useState("");
   const [busy,setBusy]=useState(false);
-  useEffect(()=>{fetch("/api/app/user-items?kind=library").then(response=>response.ok?response.json():null).then(value=>setSaved(Boolean(value?.items?.some((item:{contentId:string})=>item.contentId===contentId)))).catch(()=>null)},[contentId]);
-  const read = async () => { setBusy(true);await fetch("/api/app/history", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ contentId, progress: 1 }) }).catch(()=>null);window.location.assign(primaryHref); };
+  useEffect(()=>{Promise.all([fetch("/api/app/user-items?kind=library").then(response=>response.ok?response.json():null),fetch("/api/app/user-items?kind=history").then(response=>response.ok?response.json():null)]).then(([library,history])=>{setSaved(Boolean(library?.items?.some((item:{contentId:string})=>item.contentId===contentId)));const record=history?.items?.find((item:{contentId:string})=>item.contentId===contentId);setProgress(Number(record?.progress)||0)}).catch(()=>null)},[contentId]);
+  const read = async () => { setBusy(true);if(!progress)await fetch("/api/app/history", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ contentId, progress: 1 }) }).catch(()=>null);const href=contentType==="manga"&&progress>0?`/read/${contentId}/${progress}`:primaryHref;window.location.assign(href); };
   const save = async () => {
     if(busy)return;setBusy(true);setMessage("");
     const response=await fetch(saved?`/api/app/library?contentId=${encodeURIComponent(contentId)}`:"/api/app/library",saved?{method:"DELETE"}:{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({contentId})}).catch(()=>null);
     if(!response?.ok){setMessage(saved?"Сангаас хасахад алдаа гарлаа":"Санд нэмэхэд алдаа гарлаа");setBusy(false);return}
     setSaved(!saved);setMessage(saved?"Миний сангаас хаслаа":"Миний санд хадгаллаа");setBusy(false);
   };
-  return <><div className="title-actions clean-title-actions"><button onClick={read} disabled={busy}>▶ Унших</button><button className={saved ? "saved" : ""} onClick={save} disabled={busy}>{busy?"Түр хүлээнэ үү...":saved?"✓ Санд нэмсэн":"＋ Санд нэмэх"}</button></div>{message && <small className="action-message">{message}</small>}</>;
+  return <><div className="title-actions clean-title-actions"><button onClick={read} disabled={busy}><Play size={16} fill="currentColor"/>{progress>0?"Үргэлжлүүлэх":contentType==="anime"?"Үзэх":"Унших"}</button><button className={saved ? "saved" : ""} onClick={save} disabled={busy}>{saved?<Check size={17}/>:<Bookmark size={17}/>}<span>{busy?"Түр хүлээнэ үү...":saved?"Санд нэмсэн":"Санд нэмэх"}</span></button></div>{message && <small className="action-message">{message}</small>}</>;
 }
 
 export function Comments({ contentId }: { contentId: string }) {
