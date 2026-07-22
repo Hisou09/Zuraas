@@ -136,9 +136,24 @@ api.get("/admin/anilist", async (c) => {
 api.post("/admin/content", async (c) => {
   await ensureUser(c.req.raw);
   const item = await c.req.json<{ id?: string; title: string; originalTitle?: string; type: string; status: string; year?: number; rating?: number; genres?: string; image?: string; bannerImage?: string; characters?: string; description?: string; adult?: boolean; anilistId?: number }>();
-  const id = (item.id || item.title).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `content-${Date.now()}`;
-  await database().prepare("INSERT INTO contents (id,title,original_title,type,status,year,episode_count,rating,genres,image,banner_image,characters,description,adult,anilist_id) VALUES (?,?,?,?,?,?,0,?,?,?,?,?,?,?,?)").bind(id, item.title, item.originalTitle || item.title, item.type, item.status, item.year || new Date().getFullYear(), item.rating || 0, item.genres || "", item.image || "https://placehold.co/600x900/15171d/78859a?text=ZURAAS", item.bannerImage || "", item.characters || "[]", item.description || "", item.adult ? 1 : 0, item.anilistId || null).run();
-  return c.json({ ok: true, id });
+  const title = String(item.title || "").trim();
+  const status = String(item.status || "").trim();
+  const type = String(item.type || "").trim();
+  if (!title || !["anime", "manga", "manhwa"].includes(type) || !["Ongoing", "Completed", "Hiatus"].includes(status)) {
+    return c.json({ error: "Бүтээлийн нэр, төрөл эсвэл төлөв буруу байна" }, 400);
+  }
+  const slug = (item.id || title).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `content-${Date.now()}`;
+  const existing = item.anilistId
+    ? await database().prepare("SELECT id FROM contents WHERE anilist_id=? OR id=? LIMIT 1").bind(item.anilistId, slug).first<{ id: string }>()
+    : await database().prepare("SELECT id FROM contents WHERE id=? LIMIT 1").bind(slug).first<{ id: string }>();
+  const id = existing?.id || slug;
+  const values = [title, item.originalTitle || title, type, status, item.year || new Date().getFullYear(), item.rating || 0, item.genres || "", item.image || "https://placehold.co/600x900/15171d/78859a?text=ZURAAS", item.bannerImage || "", item.characters || "[]", item.description || "", item.adult ? 1 : 0, item.anilistId || null] as const;
+  if (existing) {
+    await database().prepare("UPDATE contents SET title=?,original_title=?,type=?,status=?,year=?,rating=?,genres=?,image=?,banner_image=?,characters=?,description=?,adult=?,anilist_id=? WHERE id=?").bind(...values, id).run();
+  } else {
+    await database().prepare("INSERT INTO contents (id,title,original_title,type,status,year,episode_count,rating,genres,image,banner_image,characters,description,adult,anilist_id) VALUES (?,?,?,?,?,?,0,?,?,?,?,?,?,?,?)").bind(id, ...values).run();
+  }
+  return c.json({ ok: true, id, updated: Boolean(existing) });
 });
 
 api.get("/admin/content/:id", async (c) => { const content = await database().prepare("SELECT id,title,original_title AS originalTitle,type,status,year,genres,image,banner_image AS bannerImage,characters,description,adult,anilist_id AS anilistId,episode_count AS episodeCount,created_at AS createdAt FROM contents WHERE id=?").bind(c.req.param("id")).first(); const episodes = await database().prepare("SELECT id, number, access, publish_at AS publishAt, media_keys AS mediaKeys, created_at AS createdAt FROM episodes WHERE content_id=? ORDER BY number DESC").bind(c.req.param("id")).all(); return c.json({ content, episodes: episodes.results }); });
