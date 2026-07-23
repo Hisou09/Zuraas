@@ -33,6 +33,15 @@ function readLocalBindings() {
 }
 
 export default defineConfig(async () => {
+  // NODE_DEPLOY=true → build for Node.js production (Docker / Coolify VPS).
+  // The Cloudflare plugin targets Workerd runtime and emits `cloudflare:`
+  // protocol imports that Node.js cannot load. Skip it for Node.js deploys.
+  const isNodeDeploy = process.env.NODE_DEPLOY === "true";
+
+  if (isNodeDeploy) {
+    return { plugins: [vinext()] };
+  }
+
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
   process.env.WRANGLER_WRITE_LOGS ??= "false";

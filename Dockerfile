@@ -20,7 +20,11 @@ COPY . .
 # ── Build ─────────────────────────────────────────────────────────────────────
 # DATABASE_URL is only parsed at env-load time; the build itself never
 # connects to Postgres.
+# NODE_DEPLOY=true tells vite.config.ts to skip the @cloudflare/vite-plugin.
+# That plugin targets Workerd runtime and emits `cloudflare:` imports that
+# Node.js cannot load — causing ERR_UNSUPPORTED_ESM_URL_SCHEME at startup.
 ENV DATABASE_URL="postgresql://build_placeholder@localhost:5432/build_placeholder"
+ENV NODE_DEPLOY=true
 
 RUN pnpm build
 
@@ -56,8 +60,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/postgres-migrations ./postgres-migrations
 COPY --from=builder /app/scripts/migrate-postgres.mjs ./scripts/migrate-postgres.mjs
 
-# ── Copy next.config.ts (read by vinext at start) ────────────────────────────
+# ── Copy config files read by vinext at start ────────────────────────────────
 COPY --from=builder /app/next.config.ts ./next.config.ts
+COPY --from=builder /app/vite.config.ts ./vite.config.ts
 
 # ── Expose port ───────────────────────────────────────────────────────────────
 # Coolify detects EXPOSE automatically.
