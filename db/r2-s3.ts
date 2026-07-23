@@ -57,11 +57,48 @@ export function isEpisodeObjectKey(key: string, contentId: string, number: numbe
 }
 
 export async function createR2PresignedUpload(input: R2UploadDescriptor) {
-  return { uploadUrl: await signedUrl("PUT", input.key, 3600), expiresIn: 3600 };
+  // Upload through our own origin instead of sending the browser directly to
+  // r2.cloudflarestorage.com. This avoids bucket-CORS failures while preserving
+  // streaming, so large videos are not buffered in application memory.
+  const query = new URLSearchParams({ key: input.key, size: String(input.size), type: input.type });
+  return { uploadUrl: `/api/app/admin/r2/upload-proxy?${query.toString()}`, expiresIn: 3600 };
+}
+
+export async function uploadR2Object(request: Request, descriptor: R2UploadDescriptor) {
+  if (!descriptor.key || descriptor.key.includes("..") || !descriptor.key.startsWith("episodes/") || descriptor.key.length > 900) {
+    throw new Error("R2 object key буруу байна");
+  }
+  if (!Number.isFinite(descriptor.size) || descriptor.size <= 0 || !descriptor.type) {
+    throw new Error("R2 upload мэдээлэл буруу байна");
+  }
+  if (!request.body) throw new Error("Upload файл хоосон байна");
+
+  const contentLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(contentLength) && contentLength > 0 && contentLength !== descriptor.size) {
+    throw new Error("Upload файлын хэмжээ зөрүүтэй байна");
+  }
+
+  const response = await fetch(await signedUrl("PUT", descriptor.key, 3600), {
+    method: "PUT",
+    headers: { "content-type": descriptor.type },
+    body: request.body,
+    duplex: "half",
+  } as RequestInit & { duplex: "half" });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`R2 upload амжилтгүй (${response.status})${detail ? `: ${detail.slice(0, 300)}` : ""}`);
+  }
 }
 
 export async function verifyR2Upload(input: R2UploadDescriptor) {
   if (!input.key || !Number.isFinite(input.size) || input.size <= 0 || !input.type) throw new Error("R2 upload мэдээлэл буруу байна");
+  const response = await fetch(await signedUrl("HEAD", input.key), { method: "HEAD" });
+  if (!response.ok) throw new Error(`R2 дээр upload файл олдсонгүй (${response.status})`);
+  const storedSize = Number(response.headers.get("content-length"));
+  if (Number.isFinite(storedSize) && storedSize > 0 && storedSize !== input.size) {
+    throw new Error("R2 дээрх файлын хэмжээ зөрүүтэй байна");
+  }
 }
 
 export function createR2PresignedRead(key: string) {
