@@ -63,6 +63,10 @@ COPY --from=builder /app/scripts/migrate-postgres.mjs ./scripts/migrate-postgres
 # ── Copy config files read by vinext at start ────────────────────────────────
 COPY --from=builder /app/next.config.ts ./next.config.ts
 COPY --from=builder /app/vite.config.ts ./vite.config.ts
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+
+# ── Copy db/ shim (needed if vinext re-imports via the alias at runtime) ──────
+COPY --from=builder /app/db ./db
 
 # ── Expose port ───────────────────────────────────────────────────────────────
 # Coolify detects EXPOSE automatically.

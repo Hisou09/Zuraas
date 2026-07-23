@@ -39,7 +39,17 @@ export default defineConfig(async () => {
   const isNodeDeploy = process.env.NODE_DEPLOY === "true";
 
   if (isNodeDeploy) {
-    return { plugins: [vinext()] };
+    return {
+      plugins: [vinext()],
+      resolve: {
+        alias: {
+          // Redirect `import { env } from "cloudflare:workers"` to a Node.js
+          // shim that re-exports process.env. All usages in this codebase cast
+          // env to a Record<string, string|undefined>, which process.env satisfies.
+          "cloudflare:workers": new URL("./db/cloudflare-workers-shim.ts", import.meta.url).pathname,
+        },
+      },
+    };
   }
 
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
