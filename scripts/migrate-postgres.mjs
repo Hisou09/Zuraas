@@ -18,6 +18,27 @@ async function loadEnvFile(filename) {
   }
 }
 
+/** PBKDF2-SHA256 password hash — same format as db/auth.ts hashPassword(). */
+async function hashPassword(password) {
+  const PASSWORD_ITERATIONS = 210_000;
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: PASSWORD_ITERATIONS }, key, 256);
+  const bytesToBase64 = (bytes) => {
+    let value = "";
+    for (const byte of bytes) value += String.fromCharCode(byte);
+    return btoa(value);
+  };
+  return `pbkdf2$${PASSWORD_ITERATIONS}$${bytesToBase64(salt)}$${bytesToBase64(new Uint8Array(bits))}`;
+}
+
+/** Generate a random 6-digit usercode. */
+function randomUsercode() {
+  const value = new Uint32Array(1);
+  crypto.getRandomValues(value);
+  return String(100000 + (value[0] % 900000));
+}
+
 await loadEnvFile(".dev.vars");
 await loadEnvFile(".env.local");
 await loadEnvFile(".env");
@@ -64,6 +85,28 @@ try {
     console.log(`✓ ${filename} амжилттай`);
   }
   console.log("PostgreSQL schema шинэчлэгдлээ. Өмнөх өгөгдөл хэвээр үлдсэн.");
+
+  // ── Seed default admin account ──────────────────────────────────────────────
+  // Idempotent: only inserts when the email doesn't exist. Safe to run on
+  // every deploy — existing data is never modified.
+  const ADMIN_EMAIL = "admin@app.com";
+  const ADMIN_PASSWORD = "password";
+  const ADMIN_DISPLAY_NAME = "Admin";
+
+  const [existing] = await sql`SELECT email FROM users WHERE email = ${ADMIN_EMAIL} LIMIT 1`;
+  if (!existing) {
+    const passwordHash = await hashPassword(ADMIN_PASSWORD);
+    const usercode = randomUsercode();
+    await sql`
+      INSERT INTO users (email, display_name, role, usercode, contact_email, password_hash)
+      VALUES (${ADMIN_EMAIL}, ${ADMIN_DISPLAY_NAME}, 'admin', ${usercode}, ${ADMIN_EMAIL}, ${passwordHash})
+    `;
+    console.log(`✓ Admin account created: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
+  } else {
+    console.log(`✓ Admin account already exists: ${ADMIN_EMAIL}`);
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
 } catch (error) {
   if (error?.code === "ECONNREFUSED") {
     throw new Error("PostgreSQL ажиллахгүй байна. Local PostgreSQL-оо асаах эсвэл `docker compose up -d postgres` ажиллуулаад дахин оролдоно уу.", { cause: error });
