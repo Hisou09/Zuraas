@@ -1,11 +1,12 @@
 import { Hono } from "hono";
 import { catalog } from "../../data/catalog";
 import { database } from "../../../db/runtime";
+import { authenticateRequest } from "../../../db/auth";
 
 const api = new Hono().basePath("/api");
 
 api.get("/catalog", async (c) => {
-  if(!c.req.header("oai-authenticated-user-email"))return c.json({error:"Нэвтрэх шаардлагатай"},401);
+  if(!await authenticateRequest(c.req.raw))return c.json({error:"Нэвтрэх шаардлагатай"},401);
   c.header("Cache-Control", "private, max-age=60, stale-while-revalidate=300");
   const query = (c.req.query("q") ?? "").toLowerCase();
   const type = c.req.query("type");
@@ -19,22 +20,19 @@ api.get("/catalog", async (c) => {
         c.type,
         c.status,
         c.year,
-        c.episode_count AS count,
+        (SELECT COUNT(*) FROM episodes e_count WHERE e_count.content_id = c.id AND (e_count.publish_at IS NULL OR datetime(e_count.publish_at) <= CURRENT_TIMESTAMP)) AS count,
         c.rating,
         c.genres,
         c.image,
         c.created_at AS createdAt,
-        COALESCE(
-          (SELECT MAX(COALESCE(e.publish_at, e.created_at))
-           FROM episodes e
-           WHERE e.content_id = c.id
-             AND (e.publish_at IS NULL OR datetime(e.publish_at) <= CURRENT_TIMESTAMP)),
-          c.created_at
-        ) AS latestAt
+        (SELECT MAX(COALESCE(e.publish_at, e.created_at))
+         FROM episodes e
+         WHERE e.content_id = c.id
+           AND (e.publish_at IS NULL OR datetime(e.publish_at) <= CURRENT_TIMESTAMP)) AS latestAt
       FROM contents c
       ORDER BY datetime(c.created_at) DESC
     `).all();
-    databaseItems = result.results.map((row: Record<string, unknown>) => ({ id: String(row.id), title: String(row.title), originalTitle: String(row.originalTitle), type: row.type as "anime" | "manga" | "manhwa", status: String(row.status), year: Number(row.year), ...(row.type === "anime" ? { episodes: Number(row.count) } : { chapters: Number(row.count) }), rating: Number(row.rating), genres: String(row.genres).split(",").map((value) => value.trim()).filter(Boolean), image: String(row.image), createdAt: String(row.createdAt), latestAt: String(row.latestAt) }));
+    databaseItems = result.results.map((row: Record<string, unknown>) => ({ id: String(row.id), title: String(row.title), originalTitle: String(row.originalTitle), type: row.type as "anime" | "manga" | "manhwa", status: String(row.status), year: Number(row.year), ...(row.type === "anime" ? { episodes: Number(row.count) } : { chapters: Number(row.count) }), rating: Number(row.rating), genres: String(row.genres).split(",").map((value) => value.trim()).filter(Boolean), image: String(row.image), createdAt: String(row.createdAt), ...(row.latestAt ? { latestAt: String(row.latestAt) } : {}) }));
   } catch { /* D1 may be unavailable during a local static probe */ }
   let animeIndex = 0;
   let mangaIndex = 0;
@@ -45,9 +43,9 @@ api.get("/catalog", async (c) => {
       ? [8, 95, 24 * 60, 3 * 24 * 60, 8 * 24 * 60, 18 * 24 * 60, 35 * 24 * 60, 68 * 24 * 60, 95 * 24 * 60, 150 * 24 * 60][index]
       : [24, 4 * 60, 2 * 24 * 60, 5 * 24 * 60, 11 * 24 * 60, 21 * 24 * 60, 40 * 24 * 60, 72 * 24 * 60, 110 * 24 * 60, 180 * 24 * 60][index];
     const timestamp = new Date(now - (offsetMinutes ?? (index + 1) * 24 * 60) * 60_000).toISOString();
-    return { ...item, createdAt: timestamp, latestAt: timestamp };
+    return { ...item, createdAt: timestamp, latestAt: undefined };
   });
-  const merged = new Map(demoItems.map((item) => [item.id, item]));
+  const merged = new Map<string, (typeof catalog)[number]>(demoItems.map((item) => [item.id, item]));
   databaseItems.forEach((item) => merged.set(item.id, item));
   const items = [...merged.values()].filter((item) => {
     const matchesQuery = !query || `${item.title} ${item.originalTitle} ${item.genres.join(" ")}`.toLowerCase().includes(query);

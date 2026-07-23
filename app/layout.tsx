@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { getChatGPTUser } from "./chatgpt-auth";
+import "./auth-local.css";
+import "./button-system.css";
+import "./polish.css";
+import "./admin-polish.css";
+import "./ui-system.css";
+import { getLocalUser } from "./local-auth";
 import { AccessGate } from "./components/AccessGate";
 
 export const dynamic = "force-dynamic";
 
 export function generateMetadata(): Metadata {
-  const title = "Нүүр";
-  const description = "Монгол хадмалтай анимэ үзэж, манхва унших шинэ орон зай.";
+  const title = "Зураас";
+  const description = "Монгол хадмалтай хэнтаи үзэж, манхва унших шинэ орон зай.";
 
   return {
     title,
@@ -19,6 +24,6 @@ export function generateMetadata(): Metadata {
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const user=await getChatGPTUser();
+  const user=await getLocalUser();
   return <html lang="mn"><body><AccessGate authenticated={Boolean(user)}>{user?children:null}</AccessGate></body></html>;
 }

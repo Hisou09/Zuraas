@@ -1,37 +1,36 @@
 import vinext from "vinext";
 import { defineConfig } from "vite";
-import hostingConfig from "./.openai/hosting.json";
-import { sites } from "./build/sites-vite-plugin";
+import { existsSync, readFileSync } from "node:fs";
 
-const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
-  "00000000-0000-4000-8000-000000000000";
+function readLocalBindings() {
+  const bindings: Record<string, string> = {};
 
-const { d1, r2 } = hostingConfig;
+  for (const filename of [".dev.vars", ".env.local", ".env"]) {
+    if (!existsSync(filename)) continue;
 
-// macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
-const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
+    for (const rawLine of readFileSync(filename, "utf8").split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith("#")) continue;
 
-const localBindingConfig = {
-  main: "./worker/index.ts",
-  compatibility_flags: ["nodejs_compat"],
-  d1_databases: d1
-    ? [
-        {
-          binding: d1,
-          database_name: "site-creator-d1",
-          database_id: SITE_CREATOR_PLACEHOLDER_DATABASE_ID,
-        },
-      ]
-    : [],
-  r2_buckets: r2
-    ? [
-        {
-          binding: r2,
-          bucket_name: "site-creator-r2",
-        },
-      ]
-    : [],
-};
+      const separator = line.indexOf("=");
+      if (separator < 1) continue;
+
+      const key = line.slice(0, separator).trim();
+      let value = line.slice(separator + 1).trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+
+      // The first, most local file wins. This mirrors the database scripts.
+      bindings[key] ??= value;
+    }
+  }
+
+  return bindings;
+}
 
 export default defineConfig(async () => {
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
@@ -42,14 +41,22 @@ export default defineConfig(async () => {
 
   // Wrangler snapshots its log path while the Cloudflare plugin is imported.
   const { cloudflare } = await import("@cloudflare/vite-plugin");
+  const localVariables = readLocalBindings();
+  const localBindingConfig = {
+    main: "./worker/index.ts",
+    compatibility_flags: ["nodejs_compat"],
+    vars: localVariables,
+    r2_buckets: [
+      {
+        binding: "MEDIA",
+        bucket_name: localVariables.R2_BUCKET_NAME?.trim() || "zuraas-media",
+      },
+    ],
+  };
 
   return {
-    server: isCodexSeatbeltSandbox
-      ? { watch: { useFsEvents: false, usePolling: true } }
-      : undefined,
     plugins: [
       vinext(),
-      sites(),
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         config: localBindingConfig,
