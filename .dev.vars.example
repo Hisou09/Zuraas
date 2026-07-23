@@ -1,4 +1,4 @@
-DATABASE_URL=postgresql://zuraas@127.0.0.1:56432/zuraas
+DATABASE_URL=postgresql://zuraas@127.0.0.1:5432/zuraastest
 R2_ACCOUNT_ID=
 R2_ACCESS_KEY_ID=
 R2_SECRET_ACCESS_KEY=

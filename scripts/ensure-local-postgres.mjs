@@ -1,5 +1,5 @@
-import { access, mkdir, readFile } from "node:fs/promises";
-import { spawnSync } from "node:child_process";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { execSync, spawnSync } from "node:child_process";
 import path from "node:path";
 
 async function loadEnvFile(filename) {
@@ -87,6 +87,7 @@ const createdb = path.join(postgresBin, "createdb.exe");
 
 await mkdir(path.dirname(dataDirectory), { recursive: true });
 
+const configPath = path.join(dataDirectory, "postgresql.conf");
 if (!(await exists(path.join(dataDirectory, "PG_VERSION")))) {
   console.log("Local PostgreSQL database анх удаа үүсгэж байна...");
   const status = run(initdb, [
@@ -100,16 +101,27 @@ if (!(await exists(path.join(dataDirectory, "PG_VERSION")))) {
   if (status !== 0) throw new Error("Local PostgreSQL database үүсгэж чадсангүй.");
 }
 
+if (await exists(configPath)) {
+  let conf = await readFile(configPath, "utf8");
+  if (!conf.includes(`port = ${port}`)) {
+    conf = conf.replace(/^#?\s*port\s*=\s*\d+/m, `port = ${port}`);
+    conf = conf.replace(/^#?\s*listen_addresses\s*=\s*'.*?'/m, `listen_addresses = '${host}'`);
+    await writeFile(configPath, conf, "utf8");
+  }
+}
+
 const readyArgs = ["-h", host, "-p", port, "-U", user, "-d", "postgres", "-q"];
 if (run(pgIsReady, readyArgs, { quiet: true }) !== 0) {
   console.log(`Local PostgreSQL ${host}:${port} дээр асааж байна...`);
-  const status = run(pgCtl, [
-    "start", "-D", dataDirectory,
-    "-l", logFile,
-    "-o", `-p ${port} -h ${host}`,
-    "-w", "-t", "20",
-  ]);
-  if (status !== 0) throw new Error("Local PostgreSQL ассангүй.");
+  if (process.platform === "win32") {
+    run("powershell.exe", [
+      "-NoProfile",
+      "-Command",
+      `Start-Process -FilePath '${pgCtl}' -ArgumentList 'start','-D','${dataDirectory}','-l','${logFile}','-w','-t','20' -Wait`
+    ], { quiet: true });
+  } else {
+    run(pgCtl, ["start", "-D", dataDirectory, "-l", logFile, "-w", "-t", "20"], { quiet: true });
+  }
 }
 
 const createStatus = run(createdb, ["-h", host, "-p", port, "-U", user, database], { quiet: true });
