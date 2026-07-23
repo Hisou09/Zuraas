@@ -3,8 +3,8 @@
 # =============================================================================
 FROM node:22.13.0-alpine AS builder
 
-# Enable corepack so pnpm is available (version pinned via lockfile)
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install pnpm via npm to avoid corepack signature verification issues
+RUN npm install -g pnpm
 
 WORKDIR /app
 
@@ -18,8 +18,8 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # ── Build ─────────────────────────────────────────────────────────────────────
-# DATABASE_URL is required only by migration scripts; the build itself never
-# connects to Postgres, but some env parsing runs at config time.
+# DATABASE_URL is only parsed at env-load time; the build itself never
+# connects to Postgres.
 ENV DATABASE_URL="postgresql://build_placeholder@localhost:5432/build_placeholder"
 
 RUN pnpm build
@@ -29,8 +29,8 @@ RUN pnpm build
 # =============================================================================
 FROM node:22.13.0-alpine AS runner
 
-# Install corepack for pnpm (needed to run the migration script)
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install pnpm via npm (same approach as builder)
+RUN npm install -g pnpm
 
 WORKDIR /app
 
@@ -38,13 +38,12 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-# ── Copy package manifests (needed by pnpm and node module resolution) ────────
+# ── Copy package manifests ────────────────────────────────────────────────────
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # ── Copy node_modules from builder ───────────────────────────────────────────
-# vinext, vite, postgres, drizzle-kit etc. are all needed at runtime for:
-#   - `vinext start`  (vinext/vite serve the dist/ folder)
-#   - `db:migrate`    (postgres driver, scripts/)
+# All node_modules are copied because vinext/vite are required at runtime by
+# `vinext start`, and postgres/drizzle are needed by the migration script.
 COPY --from=builder /app/node_modules ./node_modules
 
 # ── Copy build artifacts ──────────────────────────────────────────────────────
@@ -53,7 +52,7 @@ COPY --from=builder /app/dist ./dist
 # ── Copy static public assets ─────────────────────────────────────────────────
 COPY --from=builder /app/public ./public
 
-# ── Copy database migration files & migration runner ─────────────────────────
+# ── Copy database migration files & runner script ─────────────────────────────
 COPY --from=builder /app/postgres-migrations ./postgres-migrations
 COPY --from=builder /app/scripts/migrate-postgres.mjs ./scripts/migrate-postgres.mjs
 
@@ -61,9 +60,9 @@ COPY --from=builder /app/scripts/migrate-postgres.mjs ./scripts/migrate-postgres
 COPY --from=builder /app/next.config.ts ./next.config.ts
 
 # ── Expose port ───────────────────────────────────────────────────────────────
-# Coolify will pick this up automatically.
+# Coolify detects EXPOSE automatically.
 EXPOSE 3000
 
 # ── Startup: run migrations then start the production server ──────────────────
-# DATABASE_URL and other secrets are injected at runtime by Coolify.
+# DATABASE_URL and all other secrets are injected at runtime by Coolify.
 CMD ["sh", "-c", "node scripts/migrate-postgres.mjs && npx vinext start"]
