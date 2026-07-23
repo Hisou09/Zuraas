@@ -36,9 +36,9 @@ function relativeTime(value?:string){
 }
 function Card({item,isNew=false}:{item:CatalogItem;isNew?:boolean}){
   const total=item.type==="anime"?item.episodes:item.chapters;
-  const count=`${typeof total==="number"&&total>0?total:"?"} ${item.type==="anime"?"анги":"бүлэг"}`;
+  const count=typeof total==="number"&&total>0?`${total} ${item.type==="anime"?"анги":"бүлэг"}`:null;
   const type=item.type==="anime"?"Хэнтаи":"Манхва";
-  return <Link className="card" href={`/title/${item.id}`} prefetch={false} aria-label={`${item.title} дэлгэрэнгүй`}><div className="cover">{isNew&&<strong className="new-release-badge">Шинэ</strong>}<img src={item.image} alt={`${item.title} нүүр зураг`} loading="lazy" draggable={false}/><b className="cover-count">{count}</b><i className="cover-type">{type}</i><span>▶</span></div><h3>{item.title}</h3><time className="card-time" dateTime={itemTimestamp(item)}><Clock3 size={13}/>{relativeTime(itemTimestamp(item))}</time></Link>;
+  return <Link className="card" href={`/title/${item.id}`} prefetch={false} aria-label={`${item.title} дэлгэрэнгүй`}><div className="cover">{isNew&&<strong className="new-release-badge">Шинэ</strong>}<img src={item.image} alt={`${item.title} нүүр зураг`} loading="lazy" draggable={false}/>{count&&<b className="cover-count">{count}</b>}<i className="cover-type">{type}</i><span>▶</span></div><h3>{item.title}</h3><time className="card-time" dateTime={itemTimestamp(item)}><Clock3 size={13}/>{relativeTime(itemTimestamp(item))}</time></Link>;
 }
 function Shelf({title,items,more,markNew=false,controls=true}:{title:string;items:CatalogItem[];more?:string;markNew?:boolean;controls?:boolean}){
   const row=useRef<HTMLDivElement>(null);const drag=useRef({active:false,startX:0,scrollLeft:0,moved:false});
