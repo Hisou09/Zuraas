@@ -36,6 +36,7 @@ export default async function TitlePage({params}:{params:Promise<{id:string}>}){
   const {id}=await params;
   let item:(CatalogItem&{description?:string})|undefined=catalog.find(entry=>entry.id===id);
   let savedEpisodes:Episode[]=[];
+  let isDatabaseItem=false;
   let bannerImage="";
   let characters:Character[]=[];
   let hasVip=false;
@@ -48,6 +49,7 @@ export default async function TitlePage({params}:{params:Promise<{id:string}>}){
     hasVip=user.role==="admin"||hasActiveVip(profile?.vipUntil);
     const row=await database().prepare("SELECT id,title,type,status,year,episode_count AS count,rating,genres,image,banner_image AS bannerImage,characters,description FROM contents WHERE id=?").bind(id).first<Record<string,any>>();
     if(row){
+      isDatabaseItem=true;
       item={id:String(row.id),title:String(row.title),originalTitle:String(row.title),type:row.type as CatalogItem["type"],status:String(row.status),year:Number(row.year),rating:Number(row.rating),genres:String(row.genres).split(",").map(value=>value.trim()).filter(Boolean),image:String(row.image),description:String(row.description),...(row.type==="anime"?{episodes:Number(row.count)}:{chapters:Number(row.count)})};
       bannerImage=String(row.bannerImage||row.image);
       try{characters=JSON.parse(String(row.characters||"[]")) as Character[]}catch{characters=[]}
@@ -81,7 +83,7 @@ export default async function TitlePage({params}:{params:Promise<{id:string}>}){
   const countLabel=typeof declaredCount==="number"&&declaredCount>0?String(declaredCount):"?";
   const similar=rankSimilarTitles(item,availableTitles);
   const fallbackTotal=isAnime?Math.min(item.episodes??12,12):Math.min(item.chapters??12,12);
-  const entries:Episode[]=savedEpisodes.length?savedEpisodes:Array.from({length:fallbackTotal},(_,index)=>({id:index+1,number:fallbackTotal-index,access:"registered",publishAt:null,createdAt:null,mediaKeys:"[]"}));
+  const entries:Episode[]=savedEpisodes.length?savedEpisodes:isDatabaseItem?[]:Array.from({length:fallbackTotal},(_,index)=>({id:index+1,number:fallbackTotal-index,access:"registered",publishAt:null,createdAt:null,mediaKeys:"[]"}));
   const firstEntry=[...entries].sort((a,b)=>a.number-b.number)[0];
   const firstVideo=isAnime&&firstEntry?mediaKeys(firstEntry.mediaKeys)[0]:null;
   const primaryHref=isAnime&&!hasVip?"/vip":isAnime?(firstVideo?`/watch/${encodeURIComponent(item.id)}/${firstEntry?.number}`:"#episodes"):(firstEntry?`/read/${item.id}/${firstEntry.number}`:"#chapters");
@@ -98,7 +100,7 @@ export default async function TitlePage({params}:{params:Promise<{id:string}>}){
     </section>
     <div className="detail-columns clean-detail-columns">
       <section className="entries" id={isAnime?"episodes":"chapters"}>
-        <EntryDirectory kind={isAnime?"anime":"manga"} contentId={item.id} cover={item.image} entries={entries} hasVip={hasVip}/>
+        {entries.length>0&&<EntryDirectory kind={isAnime?"anime":"manga"} contentId={item.id} cover={item.image} entries={entries} hasVip={hasVip}/>} 
         <Comments contentId={item.id}/>
       </section>
       <aside className="detail-side">
