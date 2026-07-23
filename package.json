@@ -1,25 +1,34 @@
 {
-  "name": "site-creator-vinext-starter",
+  "name": "zuraas-web",
   "version": "0.1.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "vinext dev",
+    "dev": "pnpm db:local && pnpm db:bootstrap && vinext dev",
+    "dev:app": "vinext dev",
     "build": "vinext build",
-    "start": "vinext start",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "start": "pnpm db:local && pnpm db:bootstrap && vinext start",
+    "deploy": "pnpm db:migrate && pnpm build",
+    "test": "pnpm run build && node --test tests/rendered-html.test.mjs",
+    "test:browser": "node tests/browser-smoke.test.mjs",
+    "lint": "eslint app tests eslint.config.mjs",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "node scripts/migrate-postgres.mjs",
+    "db:import:d1": "node scripts/import-d1-to-postgres.mjs",
+    "db:bootstrap": "pnpm db:migrate && pnpm db:import:d1",
+    "db:local": "node scripts/ensure-local-postgres.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
     "hono": "^4.12.31",
     "lucide-react": "^1.25.0",
     "next": "16.2.6",
+    "postgres": "3.4.7",
     "react": "19.2.6",
-    "react-dom": "19.2.6"
+    "react-dom": "19.2.6",
+    "video.js": "^8.23.9"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",

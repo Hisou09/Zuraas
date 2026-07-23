@@ -1,0 +1,162 @@
+/* Final shared control and page-alignment pass. */
+:root{
+  --control-accent:#10a3ea;
+  --control-focus:rgba(74,194,244,.42);
+  --control-radius:9px;
+}
+
+button,
+[role="button"]{
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,opacity .18s ease,transform .12s ease;
+}
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]){cursor:pointer}
+button:focus-visible,
+[role="button"]:focus-visible{
+  outline:2px solid var(--control-focus);
+  outline-offset:2px;
+}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled,
+[aria-disabled="true"]{cursor:not-allowed;opacity:.52}
+
+/* VIP status is available from the Settings navigation on every screen size. */
+.settings-vip-expiry,
+.settings-vip-purchase{display:grid!important}
+
+/* Title intro, episodes/chapters and keyword panel share one page frame. */
+.clean-detail{
+  --detail-edge:max(var(--detail-gutter),calc((100% - var(--detail-width))/2));
+}
+.clean-detail .title-intro{
+  left:var(--detail-edge);
+  right:var(--detail-edge);
+}
+.clean-detail-columns,
+.clean-detail .characters,
+.clean-detail .more-like{
+  width:auto;
+  max-width:none;
+  margin-left:var(--detail-edge);
+  margin-right:var(--detail-edge);
+}
+
+/* Primary title actions use the same rectangular control language. */
+.clean-detail .clean-title-actions{
+  gap:8px;
+}
+.clean-detail .clean-title-actions button{
+  min-height:44px;
+  border-radius:var(--control-radius)!important;
+  box-shadow:none;
+  font-weight:800;
+  justify-content:center;
+}
+.clean-detail .clean-title-actions button:first-child{
+  border:1px solid var(--control-accent);
+  background:var(--control-accent);
+  color:#06131a;
+}
+.clean-detail .clean-title-actions button:last-child{
+  border:1px solid #344253!important;
+  background:#18222d!important;
+  color:#dce6ef!important;
+}
+.clean-detail .clean-title-actions button:last-child:hover{
+  border-color:#55c8f8!important;
+  background:#1d2b38!important;
+  color:#fff!important;
+}
+.clean-detail .clean-title-actions button.saved{
+  border-color:rgba(69,214,157,.55)!important;
+  background:rgba(31,112,83,.22)!important;
+  color:#73dfb8!important;
+}
+.clean-detail .clean-title-actions button>span{
+  display:inline!important;
+  width:auto!important;
+  height:auto!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:inherit!important;
+  font-size:inherit!important;
+}
+
+/* Library summary cards are real filters and share an even three-column grid. */
+.library-stats{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.library-stats>button{
+  height:100px;
+  padding:19px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:#13151b;
+  color:inherit;
+  display:grid;
+  align-content:start;
+  text-align:left;
+}
+.library-stats>button:hover{border-color:#536a84;background:#171b23}
+.library-stats>button.active{
+  border-color:#34bdf4;
+  background:linear-gradient(135deg,#1a2532,#171a22);
+  box-shadow:inset 0 0 0 1px rgba(52,189,244,.08);
+}
+.library-stats>button.active small{color:#75d2f8}
+
+/* Library view switch is readable instead of being an unexplained icon. */
+.library-toolbar>button{
+  width:auto;
+  min-width:148px;
+  padding:0 13px;
+  border-radius:var(--control-radius);
+  background:#182331;
+  color:#b7c7d8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  font-size:10px;
+  font-weight:800;
+}
+.library-toolbar>button::after{content:"Хураангуй харах"}
+.library-toolbar>button.active::after{content:"Дэлгэрэнгүй харах"}
+.library-toolbar>button:hover,
+.library-toolbar>button.active{
+  border-color:#38bdf8;
+  background:#15334a;
+  color:#e8f7ff;
+}
+
+/* Common action controls keep consistent focus and hover feedback. */
+.settings-form-actions button,
+.password-fields button,
+.devices-head>button,
+.content-library-head>button,
+.admin-form>button,
+.episode-create-head .save,
+.collection-empty a{
+  border-radius:var(--control-radius)!important;
+}
+.settings-form-actions button:hover:not(:disabled),
+.password-fields button:hover:not(:disabled),
+.content-library-head>button:hover:not(:disabled),
+.admin-form>button:hover:not(:disabled){
+  filter:brightness(1.08);
+  box-shadow:0 8px 24px rgba(0,0,0,.18);
+}
+
+@media(max-width:720px){
+  .settings-vip-expiry,
+  .settings-vip-purchase{display:grid!important}
+  .clean-detail .clean-title-actions button{border-radius:var(--control-radius)!important}
+  .clean-detail-columns,
+  .clean-detail .characters,
+  .clean-detail .more-like{
+    margin-left:var(--detail-gutter);
+    margin-right:var(--detail-gutter);
+  }
+  .library-toolbar>button{display:none}
+}

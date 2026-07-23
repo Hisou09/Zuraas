@@ -1,0 +1,354 @@
+.anime-video-shell--polished {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+  background: #020406;
+  isolation: isolate;
+}
+
+.anime-video-host,
+.anime-video-host > .video-js {
+  width: 100%;
+  height: 100%;
+}
+
+.anime-player-stage .zuraas-video-skin {
+  --zuraas-player-accent: #69dbff;
+  font-size: 12px;
+  border-radius: inherit;
+  overflow: hidden;
+  background: #020406;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-poster {
+  background-size: cover;
+  filter: saturate(.96) contrast(1.02);
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.anime-player-stage .zuraas-video-skin:focus { outline: 0; }
+.anime-player-stage .zuraas-video-skin:focus-visible {
+  outline: 2px solid rgba(101, 221, 255, .72);
+  outline-offset: -2px;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-big-play-button {
+  width: 72px;
+  height: 72px;
+  margin: -36px 0 0 -36px;
+  border: 1px solid rgba(255, 255, 255, .42);
+  border-radius: 50%;
+  background: rgba(8, 14, 20, .7);
+  color: #fff;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, .38), inset 0 1px rgba(255, 255, 255, .12);
+  backdrop-filter: blur(13px);
+  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+.anime-player-stage .zuraas-video-skin:hover .vjs-big-play-button,
+.anime-player-stage .zuraas-video-skin .vjs-big-play-button:focus {
+  border-color: rgba(255, 255, 255, .72);
+  background: rgba(13, 23, 32, .82);
+  transform: scale(1.05);
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-control-bar {
+  right: 14px;
+  bottom: 14px;
+  left: 14px;
+  width: auto;
+  height: 62px;
+  padding: 0 12px;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 17px;
+  background: rgba(8, 14, 21, .82);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .3), inset 0 1px rgba(255, 255, 255, .06);
+  backdrop-filter: blur(18px) saturate(1.4);
+  overflow: visible;
+  transition: opacity 180ms ease, visibility 180ms ease, transform 180ms ease;
+}
+
+.anime-player-stage .zuraas-video-skin.vjs-playing.vjs-user-inactive .vjs-control-bar {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(12px);
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-control {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+  flex: 0 0 44px;
+  border-radius: 11px;
+  color: rgba(255, 255, 255, .94);
+  transition: color 140ms ease, background-color 140ms ease, transform 140ms ease;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-button:hover,
+.anime-player-stage .zuraas-video-skin .vjs-button:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, .1);
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-button:active {
+  transform: scale(.94);
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-button > .vjs-icon-placeholder::before {
+  font-size: 22px;
+  line-height: 44px;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-current-time,
+.anime-player-stage .zuraas-video-skin .vjs-remaining-time {
+  width: auto;
+  min-width: 52px;
+  height: 44px;
+  padding: 0 8px;
+  display: block;
+  flex: 0 0 auto;
+  color: rgba(236, 246, 252, .92);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 44px;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-progress-control {
+  position: relative;
+  top: auto;
+  right: auto;
+  left: auto;
+  width: auto;
+  height: 44px;
+  min-width: 140px;
+  flex: 1 1 auto;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-progress-holder {
+  height: 7px;
+  margin: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .24);
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-progress-control .vjs-mouse-display {
+  width: 1px;
+  height: 100%;
+  background: rgba(255, 255, 255, .5);
+  pointer-events: none;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-progress-control .vjs-time-tooltip {
+  top: -29px;
+  width: max-content !important;
+  min-width: 38px !important;
+  height: 22px !important;
+  padding: 0 7px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 6px;
+  background: rgba(5, 10, 15, .96);
+  color: #fff;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .3);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* The control bar already shows the current time. Keep only the hovered time
+   above the seek bar so the two Video.js tooltips cannot overlap. */
+.anime-player-stage .zuraas-video-skin .vjs-play-progress > .vjs-time-tooltip {
+  display: none !important;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-load-progress,
+.anime-player-stage .zuraas-video-skin .vjs-load-progress div,
+.anime-player-stage .zuraas-video-skin .vjs-play-progress {
+  border-radius: inherit;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-play-progress {
+  background: linear-gradient(90deg, #65ddff, #a6f2ff);
+  box-shadow: 0 0 16px rgba(101, 221, 255, .34);
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-play-progress::before {
+  top: 50%;
+  font-size: 16px;
+  color: #fff;
+  transform: translateY(-50%);
+  text-shadow: 0 0 9px rgba(101, 221, 255, .8);
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 11px;
+  overflow: visible;
+  transition: width 160ms ease, flex-basis 160ms ease, background-color 160ms ease;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel.vjs-hover,
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel:active,
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel:focus,
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel:hover {
+  width: 126px;
+  flex-basis: 126px;
+  background: rgba(255, 255, 255, .07);
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel .vjs-volume-control {
+  position: relative;
+  width: 0;
+  height: 44px;
+  margin-left: -1px;
+  flex: 0 0 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: width 160ms ease, flex-basis 160ms ease, opacity 120ms ease;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel.vjs-hover .vjs-volume-control,
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel:active .vjs-volume-control,
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel:focus .vjs-volume-control,
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel:hover .vjs-volume-control,
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel .vjs-volume-control.vjs-slider-active {
+  width: 72px;
+  margin-left: 0;
+  flex: 0 0 72px;
+  opacity: 1;
+  visibility: visible;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel .vjs-volume-bar {
+  width: 58px;
+  height: 5px;
+  margin: 19px 7px 0;
+  border-radius: 999px;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel .vjs-volume-level {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--zuraas-player-accent);
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-volume-panel .vjs-volume-level::before {
+  top: 50%;
+  right: -6px;
+  font-size: 13px;
+  transform: translateY(-50%);
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-volume-control .vjs-volume-tooltip {
+  top: -28px;
+  width: max-content !important;
+  min-width: 38px !important;
+  height: 22px !important;
+  padding: 0 7px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 6px;
+  background: rgba(5, 10, 15, .96);
+  color: #fff;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .3);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-fullscreen-control {
+  margin-left: 2px;
+}
+
+.anime-player-stage .zuraas-video-skin .vjs-skip-backward-10,
+.anime-player-stage .zuraas-video-skin .vjs-skip-forward-10 {
+  display: block;
+}
+
+@media (max-width: 700px) {
+  .anime-player-stage .zuraas-video-skin .vjs-control-bar {
+    right: 6px;
+    bottom: 6px;
+    left: 6px;
+    height: 42px;
+    padding: 0 5px;
+    gap: 0;
+    overflow: visible;
+    border-radius: 10px;
+  }
+
+  .anime-player-stage .zuraas-video-skin { font-size: 10px; }
+  .anime-player-stage .zuraas-video-skin .vjs-big-play-button {
+    width: 58px;
+    height: 58px;
+    margin: -29px 0 0 -29px;
+  }
+  .anime-player-stage .zuraas-video-skin .vjs-control {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    flex-basis: 32px;
+    border-radius: 7px;
+  }
+  .anime-player-stage .zuraas-video-skin .vjs-button > .vjs-icon-placeholder::before {
+    font-size: 17px;
+    line-height: 32px;
+  }
+  .anime-player-stage .zuraas-video-skin .vjs-current-time { display: none; }
+  .anime-player-stage .zuraas-video-skin .vjs-remaining-time { display: none; }
+  .anime-player-stage .zuraas-video-skin .vjs-progress-control {
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    width: auto;
+    height: 32px;
+    min-width: 0;
+    flex:1 1 auto;
+  }
+  .anime-player-stage .zuraas-video-skin .vjs-progress-holder {
+    width:auto;
+    height:4px;
+    margin:14px 7px 0;
+    background:rgba(255,255,255,.28);
+  }
+  .anime-player-stage .zuraas-video-skin .vjs-volume-panel { display: none; }
+  .anime-player-stage .zuraas-video-skin .vjs-fullscreen-control { margin-left: 0; }
+}
+
+@media (max-width: 430px) {
+  .anime-player-stage .zuraas-video-skin .vjs-skip-backward-10,
+  .anime-player-stage .zuraas-video-skin .vjs-skip-forward-10 { display: block; }
+  .anime-player-stage .zuraas-video-skin .vjs-control {
+    width: 31px;
+    flex-basis: 31px;
+  }
+  .anime-player-stage .zuraas-video-skin .vjs-progress-control{flex:1 1 auto}
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anime-player-stage .zuraas-video-skin .vjs-big-play-button { transition: none; }
+}
